@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31129.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TapoMobileApp.Android", "TapoMobileApp\TapoMobileApp.Android\TapoMobileApp.Android.csproj", "{60188324-F608-4363-8CAD-3C76BD4BEA6D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TapoMobileApp", "TapoMobileApp\TapoMobileApp\TapoMobileApp.csproj", "{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{60188324-F608-4363-8CAD-3C76BD4BEA6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60188324-F608-4363-8CAD-3C76BD4BEA6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60188324-F608-4363-8CAD-3C76BD4BEA6D}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{60188324-F608-4363-8CAD-3C76BD4BEA6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60188324-F608-4363-8CAD-3C76BD4BEA6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60188324-F608-4363-8CAD-3C76BD4BEA6D}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F7E1AB8-3CFA-4E4D-8407-22801393B7CA}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6985F76E-9EFB-4CC5-B519-9C08E099012A}
+	EndGlobalSection
+EndGlobal
