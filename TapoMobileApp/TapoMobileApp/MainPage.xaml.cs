@@ -24,6 +24,10 @@ namespace TapoMobileApp
             {
                 await ButtonOn_Clicked(sender, e);
             };
+            ButtonCheck.Clicked += async (sender, e) =>
+            {
+                await ButtonCheck_Clicked(sender, e);
+            };
             Scan.Clicked += async (sender, e) =>
             {
                 await ScanButton_Clicked(sender, e);
@@ -100,9 +104,16 @@ namespace TapoMobileApp
         {
             await ChangeState(false);
         }
+        public async Task ButtonCheck_Clicked(object sender, EventArgs e)
+        {
+            var results = await _tapoService.CheckState(GetPorts());
+
+            var message = string.Join("\r\n", results);
+            Toast.MakeText(Android.App.Application.Context, message, ToastLength.Long).Show();
+        }
         public async Task ChangeState(bool toggleOnOrOff)
         {
-            var errors = _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
+            var errors = await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
             var message = "Done";
             if (errors.Count > 0)
                 message = "An Error Occured with ports:" + string.Join(",", errors);

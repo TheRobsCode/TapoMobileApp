@@ -10,8 +10,8 @@ namespace TapoMobileApp
 {
     public interface ITapoService
     {
-        
-        List<int> ChangeState(int[] ports, bool toggleOnOrOff);
+        Task<List<string>> CheckState(int[] ports);
+        Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff);
         Task<int[]> Scan();
     }
     public class TapoService : ITapoService
@@ -22,17 +22,54 @@ namespace TapoMobileApp
             _settings = settings;
         }
 
-        public List<int> ChangeState(int[] ports, bool toggleOnOrOff)
+        public async Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff)
         {
-           
-             var errors = new List<int>();
-             Parallel.ForEach(ports, async port =>
-             {
-                 await LoginAndChangePrivacy(port, toggleOnOrOff, errors);
-             });
+            var errors = new List<int>();
+            var tasks = new List<Task>();
+            foreach (var port in ports)
+            {
+                tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
+            }
+            await Task.WhenAll(tasks);
             return errors;
         }
 
+        public async Task<List<string>> CheckState(int[] ports)
+        {
+            var results = new List<string>();
+            var tasks = new List<Task>();
+            foreach (var port in ports)
+            {
+                tasks.Add(LoginAndCheckPrivacy(port, results));
+            }
+            await Task.WhenAll(tasks);
+            /*Parallel.ForEach(ports, port =>
+            {
+                results.Add(AsyncHelper.RunSync(async () => await LoginAndCheckPrivacy(port)));
+                //results.Add(Task.Run(() => LoginAndCheckPrivacy(port)).Result);
+            });*/
+
+            return await Task.FromResult(results);
+        }
+        private async Task LoginAndCheckPrivacy(int port, List<string> results)
+        {
+            var url = GetIPAddress(port);
+            try
+            {
+                var stok = await DoLogin(url);
+                if (string.IsNullOrEmpty(stok))
+                { 
+                    results.Add(port + "-Error");
+                    return;
+                }
+                   
+                var checkPrivacy = await CheckPrivacy(url, stok);
+                results.Add(port + "- Privacy " + (checkPrivacy ? "on" : "off"));
+            }
+            catch (Exception)
+            {
+            }
+        }
         private async Task LoginAndChangePrivacy(int port, bool toggleOnOrOff, List<int> errors)
         {
             var url = GetIPAddress(port);
@@ -40,7 +77,10 @@ namespace TapoMobileApp
             {
                 var stok = await DoLogin(url);
                 if (string.IsNullOrEmpty(stok))
+                {
                     errors.Add(port);
+                    return;
+                }
                 var changePricacy = await ChangePrivacy(url, stok, toggleOnOrOff);
                 if (!changePricacy)
                     errors.Add(port);
@@ -51,6 +91,13 @@ namespace TapoMobileApp
             }
         }
 
+        private async Task<bool> CheckPrivacy(string url, string loginStok)
+        {
+            var obj = new PrivacyCheck { method = "get", lens_mask = new Lens_Mask() { name = new[] { "lens_mask_info" } } };
+
+            var result = await DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(url + "/stok=" + loginStok + @"/ds", obj);
+            return result.lens_mask.lens_mask_info.enabled == "on";
+        }
         private async Task<bool> ChangePrivacy(string url, string loginStok, bool toggleOnOrOff)
         {
             var obj = new PrivacyCall { method = "set", lens_mask = new LensMask { lens_mask_info = new LensMaskInfo { enabled = "off" } } };
@@ -58,7 +105,7 @@ namespace TapoMobileApp
             {
                 obj.lens_mask.lens_mask_info.enabled = "on";
             }
-            var ret = await DoTapoCommand<PrivacyCall>(url + "/stok=" + loginStok + @"/ds", obj);
+            var ret = await DoTapoCommand<TapoResult, PrivacyCall>(url + "/stok=" + loginStok + @"/ds", obj);
             if (ret == null)
                 return false;
             return true;
@@ -104,7 +151,7 @@ namespace TapoMobileApp
             }
             return false;
         }
-        private async Task<TapoResult> DoTapoCommand<TCall>(string url, TCall callObj)
+        private async Task<TResult> DoTapoCommand<TResult,TCall>(string url, TCall callObj)
         {
             using (var httpClientHandler = new HttpClientHandler())
             {
@@ -119,14 +166,14 @@ namespace TapoMobileApp
                     {
                         var result = await http.PostAsync(url, content);
                         if (!result.IsSuccessStatusCode)
-                            return null;
+                            return default(TResult);
                         var cont = await result.Content.ReadAsStringAsync();
-                        var loginResult = JsonConvert.DeserializeObject<TapoResult>(cont);
+                        var loginResult = JsonConvert.DeserializeObject<TResult>(cont);
                         return loginResult;
                     }
                     catch(Exception e)
                     {
-                        return null;
+                        return default(TResult);
                     }
                 }
             }
@@ -134,7 +181,7 @@ namespace TapoMobileApp
         private async Task<string> DoLogin(string url)
         {
             var obj = new LoginCall { method = "login", @params = new Params { hashed = true, password = GetPassword(), username = _settings.UserName } };
-            var result = await DoTapoCommand<LoginCall>(url, obj);
+            var result = await DoTapoCommand<TapoResult, LoginCall>(url, obj);
             if (result == null)
                 return null;
             return result.result.stok;

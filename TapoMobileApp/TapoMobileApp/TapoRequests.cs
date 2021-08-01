@@ -27,4 +27,15 @@
     {
         public string enabled { get; set; }
     }
+
+    public class PrivacyCheck
+    {
+        public string method { get; set; }
+        public Lens_Mask lens_mask { get; set; }
+    }
+
+    public class Lens_Mask
+    {
+        public string[] name { get; set; }
+    }
 }
