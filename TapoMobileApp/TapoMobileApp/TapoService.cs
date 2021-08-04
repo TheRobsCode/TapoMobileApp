@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using System.Net.Http;
 using System.Net.NetworkInformation;
 
 namespace TapoMobileApp
@@ -16,10 +13,10 @@ namespace TapoMobileApp
     }
     public class TapoService : ITapoService
     {
-        private SettingsService _settings;
-        public TapoService(SettingsService settings)
+        private ITapoHttpClient _httpClient;
+        public TapoService(ITapoHttpClient tapoHttpClient)
         {
-            _settings = settings;
+            _httpClient = tapoHttpClient;
         }
 
         public async Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff)
@@ -43,69 +40,49 @@ namespace TapoMobileApp
                 tasks.Add(LoginAndCheckPrivacy(port, results));
             }
             await Task.WhenAll(tasks);
-            /*Parallel.ForEach(ports, port =>
-            {
-                results.Add(AsyncHelper.RunSync(async () => await LoginAndCheckPrivacy(port)));
-                //results.Add(Task.Run(() => LoginAndCheckPrivacy(port)).Result);
-            });*/
 
             return await Task.FromResult(results);
         }
         private async Task LoginAndCheckPrivacy(int port, List<string> results)
         {
-            var url = GetIPAddress(port);
             try
             {
-                var stok = await DoLogin(url);
-                if (string.IsNullOrEmpty(stok))
-                { 
-                    results.Add(port + "-Error");
-                    return;
-                }
-                   
-                var checkPrivacy = await CheckPrivacy(url, stok);
+                var checkPrivacy = await CheckPrivacy(port);
                 results.Add(port + "- Privacy " + (checkPrivacy ? "on" : "off"));
             }
-            catch (Exception)
+            catch (Exception e)
             {
             }
         }
         private async Task LoginAndChangePrivacy(int port, bool toggleOnOrOff, List<int> errors)
         {
-            var url = GetIPAddress(port);
             try
             {
-                var stok = await DoLogin(url);
-                if (string.IsNullOrEmpty(stok))
-                {
-                    errors.Add(port);
-                    return;
-                }
-                var changePricacy = await ChangePrivacy(url, stok, toggleOnOrOff);
+                var changePricacy = await ChangePrivacy(port, toggleOnOrOff);
                 if (!changePricacy)
                     errors.Add(port);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 errors.Add(port);
             }
         }
 
-        private async Task<bool> CheckPrivacy(string url, string loginStok)
+        private async Task<bool> CheckPrivacy(int port)
         {
             var obj = new PrivacyCheck { method = "get", lens_mask = new Lens_Mask() { name = new[] { "lens_mask_info" } } };
 
-            var result = await DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(url + "/stok=" + loginStok + @"/ds", obj);
+            var result = await _httpClient.DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(port, obj);
             return result.lens_mask.lens_mask_info.enabled == "on";
         }
-        private async Task<bool> ChangePrivacy(string url, string loginStok, bool toggleOnOrOff)
+        private async Task<bool> ChangePrivacy(int port, bool toggleOnOrOff)
         {
             var obj = new PrivacyCall { method = "set", lens_mask = new LensMask { lens_mask_info = new LensMaskInfo { enabled = "off" } } };
             if (toggleOnOrOff)
             {
                 obj.lens_mask.lens_mask_info.enabled = "on";
             }
-            var ret = await DoTapoCommand<TapoResult, PrivacyCall>(url + "/stok=" + loginStok + @"/ds", obj);
+            var ret = await _httpClient.DoTapoCommand<TapoResult, PrivacyCall>(port, obj);
             if (ret == null)
                 return false;
             return true;
@@ -139,7 +116,7 @@ namespace TapoMobileApp
                 if (!Ping(url))
                     return false;
 
-                var login = await DoLogin("https://" + url);
+                var login = await _httpClient.DoLogin(port, false);
                 if (!string.IsNullOrEmpty(login))
                 {
                     result.Add(port);
@@ -150,65 +127,6 @@ namespace TapoMobileApp
             {
             }
             return false;
-        }
-        private async Task<TResult> DoTapoCommand<TResult,TCall>(string url, TCall callObj)
-        {
-            using (var httpClientHandler = new HttpClientHandler())
-            {
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
-
-                using (var http = new HttpClient(httpClientHandler) { Timeout = TimeSpan.FromSeconds(15) })
-                {
-                    var json = JsonConvert.SerializeObject(callObj);
-
-                    var content = new StringContent(json, Encoding.UTF8, "application/json");
-                    try
-                    {
-                        var result = await http.PostAsync(url, content);
-                        if (!result.IsSuccessStatusCode)
-                            return default(TResult);
-                        var cont = await result.Content.ReadAsStringAsync();
-                        var loginResult = JsonConvert.DeserializeObject<TResult>(cont);
-                        return loginResult;
-                    }
-                    catch(Exception e)
-                    {
-                        return default(TResult);
-                    }
-                }
-            }
-        }
-        private async Task<string> DoLogin(string url)
-        {
-            var obj = new LoginCall { method = "login", @params = new Params { hashed = true, password = GetPassword(), username = _settings.UserName } };
-            var result = await DoTapoCommand<TapoResult, LoginCall>(url, obj);
-            if (result == null)
-                return null;
-            return result.result.stok;
-        }
-
-        private string CreateMD5(string input)
-        {
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
-            {
-                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-
-                var sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("X2"));
-                }
-                return sb.ToString();
-            }
-        }
-        private string GetPassword()
-        {
-            return CreateMD5(_settings.Password).ToUpper();
-        }
-        private string GetIPAddress(int port)
-        {
-            return "https://192.168.1." + port;
         }
 
     }

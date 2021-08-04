@@ -3,10 +3,17 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace TapoMobileApp
 {
-    public class SettingsService
+    public interface ISettingsService
+    {
+        string UserName { get; }
+        string Password { get; }
+
+    }
+    public class SettingsService : ISettingsService
     {
         public string UserName { get; private set; }
         public string Password { get; private set; }
@@ -31,10 +38,25 @@ namespace TapoMobileApp
                     var j = JObject.Parse(json);
 
                     UserName =j.Value<string>("userName");
-                    Password = j.Value<string>("password");
+                    Password = CreateMD5(j.Value<string>("password"));
                 }
 
                    
+            }
+        }
+        private string CreateMD5(string input)
+        {
+            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            {
+                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                var sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("X2"));
+                }
+                return sb.ToString().ToUpper();
             }
         }
     }

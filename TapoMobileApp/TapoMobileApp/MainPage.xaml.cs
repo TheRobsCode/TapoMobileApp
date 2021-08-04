@@ -11,11 +11,18 @@ namespace TapoMobileApp
     public partial class MainPage : ContentPage
     {
         private const string PortsConfig = "Ports";
-        private readonly ITapoService _tapoService = new TapoService(new SettingsService());
+        private readonly ITapoService _tapoService;
+        private readonly IStoredProperties _storedProperties;
 
         public MainPage()
         {
             InitializeComponent();
+            var settingService = new SettingsService();
+            _storedProperties = new StoredProperties();
+
+            var httpClient = new TapoHttpClient(settingService, _storedProperties);
+            //var loginProvider = new LoginProvider(httpClient, settingService);
+            _tapoService = new TapoService(httpClient);
             ButtonOff.Clicked += async (sender, e) =>
             {
                 await ButtonOff_Clicked(sender,e);
@@ -32,9 +39,9 @@ namespace TapoMobileApp
             {
                 await ScanButton_Clicked(sender, e);
             };
-            if (Application.Current.Properties.ContainsKey(PortsConfig))
+            if (_storedProperties.ContainsKey(PortsConfig))
             {
-                _ports.Text = Application.Current.Properties[PortsConfig].ToString();
+                _ports.Text = _storedProperties.Get(PortsConfig).ToString();
             }
 
             Task.Run(async () => await AddShortcuts());
@@ -84,8 +91,8 @@ namespace TapoMobileApp
             await Task.Run(() => Device.BeginInvokeOnMainThread(() => { SetButtonState(Scan, "Please Wait...", false); }));
 
             var ports = await _tapoService.Scan();
-            Application.Current.Properties[PortsConfig] = string.Join(",", ports);
-            _ports.Text = Application.Current.Properties[PortsConfig].ToString();
+            _storedProperties.Set(PortsConfig, string.Join(",", ports));
+            _ports.Text = _storedProperties.Get(PortsConfig).ToString();
 
             await Task.Run(() => Device.BeginInvokeOnMainThread(() => { SetButtonState(Scan, "Scan", true); }));
 
@@ -122,12 +129,12 @@ namespace TapoMobileApp
         }
         private void _ports_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Application.Current.Properties[PortsConfig] = e.NewTextValue;
+            _storedProperties.Set(PortsConfig, e.NewTextValue);
         }
 
         private int[] GetPorts()
         {
-            var ports = Application.Current.Properties[PortsConfig].ToString().Split(',');
+            var ports = _storedProperties.Get(PortsConfig).ToString().Split(',');
             var result = new List<int>();
             foreach(var port in ports)
             {
