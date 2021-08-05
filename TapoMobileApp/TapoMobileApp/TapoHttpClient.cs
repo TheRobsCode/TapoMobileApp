@@ -3,7 +3,6 @@ using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Xamarin.Forms;
 
 namespace TapoMobileApp
 {
@@ -53,9 +52,9 @@ namespace TapoMobileApp
                 return null;
             if (!_storedProperties.ContainsKey(cacheProp))
                 return null;
-            if (_storedProperties.Get(cacheProp) == null)
+            var prop = _storedProperties.Get<LoginCache>(cacheProp);
+            if (prop == null)
                 return null;
-            var prop = (LoginCache)_storedProperties.Get(cacheProp);
             if (prop.ExpiryDate < DateTime.Now)
                 return null;
             return prop.Stok;
@@ -90,13 +89,13 @@ namespace TapoMobileApp
         public async Task<TResult> DoTapoCommand<TResult, TCall>(int port, TCall callObj)
         {
             TResult ret = default(TResult);
-            foreach(var useCache in new[] { true,false})
+            foreach (var useCache in new[] { true, false })
             {
                 var stok = await DoLogin(port, useCache);
                 if (string.IsNullOrEmpty(stok))
                     continue;
                 var url = GetIPAddress(port) + "/stok=" + stok + @"/ds"; //"/stok=" + loginStok + @"/ds"
-                ret =  await DoTapoCommand<TResult, TCall>(url, callObj);
+                ret = await DoTapoCommand<TResult, TCall>(url, callObj);
                 if (ret != null)
                     return ret;
             }

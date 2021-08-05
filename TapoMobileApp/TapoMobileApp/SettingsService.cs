@@ -37,11 +37,11 @@ namespace TapoMobileApp
 
                     var j = JObject.Parse(json);
 
-                    UserName =j.Value<string>("userName");
+                    UserName = j.Value<string>("userName");
                     Password = CreateMD5(j.Value<string>("password"));
                 }
 
-                   
+
             }
         }
         private string CreateMD5(string input)

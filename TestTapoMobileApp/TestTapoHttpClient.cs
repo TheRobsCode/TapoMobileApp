@@ -20,7 +20,9 @@ namespace TestTapoMobileApp
         public async Task TestChangeStateHappyPathCachedLogin()
         {
             var fakeStoredProperties = A.Fake<IStoredProperties>();
-            A.CallTo(() => fakeStoredProperties.Get(A<string>.Ignored)).Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(1)});
+            A.CallTo(fakeStoredProperties)
+                .Where(call => call.Method.Name == "Get").WithNonVoidReturnType().Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(1) });
+
             A.CallTo(() => fakeStoredProperties.ContainsKey(A<string>.Ignored)).Returns(true);
 
             var client = new MockTapoHttpClient(_fakeSettingsService, fakeStoredProperties);
@@ -35,7 +37,9 @@ namespace TestTapoMobileApp
         public async Task TestChangeStateHappyPathNoCachedLogin()
         {
             var fakeStoredProperties = A.Fake<IStoredProperties>();
-            A.CallTo(() => fakeStoredProperties.Get(A<string>.Ignored)).Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(-1) });
+            A.CallTo(fakeStoredProperties)
+                .Where(call => call.Method.Name == "Get").WithNonVoidReturnType().Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(-1) });
+
             A.CallTo(() => fakeStoredProperties.ContainsKey(A<string>.Ignored)).Returns(true);
 
             var client = new MockTapoHttpClient(_fakeSettingsService, fakeStoredProperties);
@@ -45,14 +49,18 @@ namespace TestTapoMobileApp
 
             Assert.NotNull(ret);
             Assert.Equal(0, ret.error_code);
-            A.CallTo(() => fakeStoredProperties.Set(A<string>.Ignored, A<object>.Ignored)).MustHaveHappened();
+            //A.CallTo(() => fakeStoredProperties.Set(A<string>.Ignored, A<string>.Ignored)).MustHaveHappened();
+            A.CallTo(fakeStoredProperties)
+                .Where(call => call.Method.Name == "Set").WithVoidReturnType().MustHaveHappened();
         }
 
         [Fact]
         public async Task TestChangeStateLoginFails()
         {
             var fakeStoredProperties = A.Fake<IStoredProperties>();
-            A.CallTo(() => fakeStoredProperties.Get(A<string>.Ignored)).Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(-1) });
+            A.CallTo(fakeStoredProperties)
+                .Where(call => call.Method.Name == "Get").WithNonVoidReturnType().Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(-1) });
+
             A.CallTo(() => fakeStoredProperties.ContainsKey(A<string>.Ignored)).Returns(false);
 
             var client = new MockTapoHttpClient(_fakeSettingsService, fakeStoredProperties);
@@ -67,7 +75,9 @@ namespace TestTapoMobileApp
         public async Task TestChangeStateCachedLoginFails()
         {
             var fakeStoredProperties = A.Fake<IStoredProperties>();
-            A.CallTo(() => fakeStoredProperties.Get(A<string>.Ignored)).Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(1) });
+            A.CallTo(fakeStoredProperties)
+                .Where(call => call.Method.Name == "Get").WithNonVoidReturnType().Returns(new LoginCache { Stok = "Stok", ExpiryDate = DateTime.Now.AddDays(1) });
+
             A.CallTo(() => fakeStoredProperties.ContainsKey(A<string>.Ignored)).Returns(true);
 
             var client = new MockTapoHttpClient(_fakeSettingsService, fakeStoredProperties);

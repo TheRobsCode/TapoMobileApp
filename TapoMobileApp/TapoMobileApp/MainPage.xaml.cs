@@ -25,7 +25,7 @@ namespace TapoMobileApp
             _tapoService = new TapoService(httpClient);
             ButtonOff.Clicked += async (sender, e) =>
             {
-                await ButtonOff_Clicked(sender,e);
+                await ButtonOff_Clicked(sender, e);
             };
             ButtonOn.Clicked += async (sender, e) =>
             {
@@ -38,6 +38,10 @@ namespace TapoMobileApp
             Scan.Clicked += async (sender, e) =>
             {
                 await ScanButton_Clicked(sender, e);
+            };
+            _ports.TextChanged += async (sender, e) =>
+            {
+                await _ports_TextChanged(sender, e);
             };
             if (_storedProperties.ContainsKey(PortsConfig))
             {
@@ -127,7 +131,7 @@ namespace TapoMobileApp
 
             Toast.MakeText(Android.App.Application.Context, message, ToastLength.Long).Show();
         }
-        private void _ports_TextChanged(object sender, TextChangedEventArgs e)
+        private async Task _ports_TextChanged(object sender, TextChangedEventArgs e)
         {
             _storedProperties.Set(PortsConfig, e.NewTextValue);
         }
@@ -136,7 +140,7 @@ namespace TapoMobileApp
         {
             var ports = _storedProperties.Get(PortsConfig).ToString().Split(',');
             var result = new List<int>();
-            foreach(var port in ports)
+            foreach (var port in ports)
             {
                 if (!int.TryParse(port.Trim(), out var portNum))
                     continue;
@@ -147,7 +151,7 @@ namespace TapoMobileApp
             return result.ToArray();
         }
     }
-   
+
 
 
 

@@ -9,7 +9,7 @@
         <Button Text="Check" x:Name="ButtonCheck" />
         <Label Text="Ports:" FontSize=
                "Title" Padding="30,10,30,10"/>
-        <Entry x:Name="_ports" Placeholder="PortNumbers" TextChanged="_ports_TextChanged" />
+        <Entry x:Name="_ports" Placeholder="PortNumbers"  />
         <Button Text="Scan" x:Name="Scan" />
     </StackLayout>
 

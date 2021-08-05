@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 
 namespace TapoMobileApp
 {
@@ -94,7 +94,7 @@ namespace TapoMobileApp
             var tasks = new List<Task>();
             for (var port = 2; port < 254; port++)
             {
-                 tasks.Add(ScanPort(result, port));
+                tasks.Add(ScanPort(result, port));
             }
             await Task.WhenAll(tasks);
             return await Task.FromResult(result.ToArray());
@@ -104,7 +104,7 @@ namespace TapoMobileApp
         {
             Ping p = new Ping();
             PingReply r;
-            r = p.Send(url,1000);
+            r = p.Send(url, 1000);
 
             return r.Status == IPStatus.Success;
         }

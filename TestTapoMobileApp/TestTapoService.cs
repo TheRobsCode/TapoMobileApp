@@ -32,5 +32,18 @@ namespace TestTapoMobileApp
 
             Assert.True(result.Count == 0);
         }
+
+        [Fact]
+        public async Task TestCheckState()
+        {
+            var fakeHttpClient = A.Fake<ITapoHttpClient>();
+            A.CallTo(fakeHttpClient)
+                .Where(call => call.Method.Name == "DoTapoCommand").WithNonVoidReturnType().Returns(Task.FromResult(new PrivacyCheckResult() {lens_mask = new Lens_MaskResult(){lens_mask_info = new Lens_Mask_Info(){enabled = "on"}}}));
+            var tapoService = new TapoService(fakeHttpClient);
+            var result = await tapoService.CheckState(new[] { 1 });
+
+            Assert.True(result.Count == 1);
+            Assert.Equal("1- Privacy on",result.First());
+        }
     }
 }
