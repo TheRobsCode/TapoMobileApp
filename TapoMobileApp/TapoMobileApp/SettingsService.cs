@@ -1,9 +1,10 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace TapoMobileApp
 {
@@ -11,12 +12,10 @@ namespace TapoMobileApp
     {
         string UserName { get; }
         string Password { get; }
-
     }
+
     public class SettingsService : ISettingsService
     {
-        public string UserName { get; private set; }
-        public string Password { get; private set; }
         public SettingsService()
         {
             // Get the assembly this code is executing in
@@ -40,22 +39,21 @@ namespace TapoMobileApp
                     UserName = j.Value<string>("userName");
                     Password = CreateMD5(j.Value<string>("password"));
                 }
-
-
             }
         }
+
+        public string UserName { get; }
+        public string Password { get; }
+
         private string CreateMD5(string input)
         {
-            using (System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create())
+            using (var md5 = MD5.Create())
             {
-                byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
+                var inputBytes = Encoding.ASCII.GetBytes(input);
+                var hashBytes = md5.ComputeHash(inputBytes);
 
                 var sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("X2"));
-                }
+                for (var i = 0; i < hashBytes.Length; i++) sb.Append(hashBytes[i].ToString("X2"));
                 return sb.ToString().ToUpper();
             }
         }

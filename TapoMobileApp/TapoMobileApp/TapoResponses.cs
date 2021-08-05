@@ -1,5 +1,4 @@
-﻿
-namespace TapoMobileApp
+﻿namespace TapoMobileApp
 {
     public class TapoResult
     {

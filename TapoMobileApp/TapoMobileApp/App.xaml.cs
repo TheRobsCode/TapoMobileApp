@@ -5,7 +5,6 @@ namespace TapoMobileApp
 {
     public partial class App : Application
     {
-
         public App()
         {
             InitializeComponent();
@@ -32,10 +31,12 @@ namespace TapoMobileApp
             {
                 var mainPage = new MainPage();
                 var turnOn = option == Constants.ShortcutTurnPrivacyOn;
-                Device.BeginInvokeOnMainThread(async () => await (mainPage.ChangeState(turnOn)));
+                Device.BeginInvokeOnMainThread(async () => await mainPage.ChangeState(turnOn));
             }
             else
+            {
                 base.OnAppLinkRequestReceived(uri);
+            }
         }
     }
 }

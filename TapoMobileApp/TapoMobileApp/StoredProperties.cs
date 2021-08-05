@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Xamarin.Forms;
 
 namespace TapoMobileApp
@@ -12,6 +11,7 @@ namespace TapoMobileApp
         void Set(string key, string obj);
         void Set<T>(string key, T obj);
     }
+
     public class StoredProperties : IStoredProperties
     {
         public bool ContainsKey(string key)
@@ -28,15 +28,17 @@ namespace TapoMobileApp
         {
             var json = Application.Current.Properties[key].ToString();
             if (string.IsNullOrEmpty(json))
-                return default(T);
+                return default;
             return JsonConvert.DeserializeObject<T>(json);
         }
+
         public void Set(string key, string obj)
         {
             Application.Current.Properties.Remove(key);
             Application.Current.Properties.Add(key, obj);
             //await Application.Current.SavePropertiesAsync();
         }
+
         public void Set<T>(string key, T obj)
         {
             var json = JsonConvert.SerializeObject(obj);

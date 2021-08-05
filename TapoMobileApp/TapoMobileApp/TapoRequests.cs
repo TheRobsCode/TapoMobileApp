@@ -23,6 +23,7 @@
     {
         public LensMaskInfo lens_mask_info { get; set; }
     }
+
     public class LensMaskInfo
     {
         public string enabled { get; set; }

@@ -11,9 +11,11 @@ namespace TapoMobileApp
         Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff);
         Task<int[]> Scan();
     }
+
     public class TapoService : ITapoService
     {
-        private ITapoHttpClient _httpClient;
+        private readonly ITapoHttpClient _httpClient;
+
         public TapoService(ITapoHttpClient tapoHttpClient)
         {
             _httpClient = tapoHttpClient;
@@ -23,10 +25,7 @@ namespace TapoMobileApp
         {
             var errors = new List<int>();
             var tasks = new List<Task>();
-            foreach (var port in ports)
-            {
-                tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
-            }
+            foreach (var port in ports) tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
             await Task.WhenAll(tasks);
             return errors;
         }
@@ -35,14 +34,21 @@ namespace TapoMobileApp
         {
             var results = new List<string>();
             var tasks = new List<Task>();
-            foreach (var port in ports)
-            {
-                tasks.Add(LoginAndCheckPrivacy(port, results));
-            }
+            foreach (var port in ports) tasks.Add(LoginAndCheckPrivacy(port, results));
             await Task.WhenAll(tasks);
 
             return await Task.FromResult(results);
         }
+
+        public async Task<int[]> Scan()
+        {
+            var result = new List<int>();
+            var tasks = new List<Task>();
+            for (var port = 2; port < 254; port++) tasks.Add(ScanPort(result, port));
+            await Task.WhenAll(tasks);
+            return await Task.FromResult(result.ToArray());
+        }
+
         private async Task LoginAndCheckPrivacy(int port, List<string> results)
         {
             try
@@ -54,12 +60,13 @@ namespace TapoMobileApp
             {
             }
         }
+
         private async Task LoginAndChangePrivacy(int port, bool toggleOnOrOff, List<int> errors)
         {
             try
             {
-                var changePricacy = await ChangePrivacy(port, toggleOnOrOff);
-                if (!changePricacy)
+                var changePrivacy = await ChangePrivacy(port, toggleOnOrOff);
+                if (!changePrivacy)
                     errors.Add(port);
             }
             catch (Exception e)
@@ -70,44 +77,32 @@ namespace TapoMobileApp
 
         private async Task<bool> CheckPrivacy(int port)
         {
-            var obj = new PrivacyCheck { method = "get", lens_mask = new Lens_Mask() { name = new[] { "lens_mask_info" } } };
+            var obj = new PrivacyCheck {method = "get", lens_mask = new Lens_Mask {name = new[] {"lens_mask_info"}}};
 
             var result = await _httpClient.DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(port, obj);
             return result.lens_mask.lens_mask_info.enabled == "on";
         }
+
         private async Task<bool> ChangePrivacy(int port, bool toggleOnOrOff)
         {
-            var obj = new PrivacyCall { method = "set", lens_mask = new LensMask { lens_mask_info = new LensMaskInfo { enabled = "off" } } };
-            if (toggleOnOrOff)
-            {
-                obj.lens_mask.lens_mask_info.enabled = "on";
-            }
+            var obj = new PrivacyCall
+                {method = "set", lens_mask = new LensMask {lens_mask_info = new LensMaskInfo {enabled = "off"}}};
+            if (toggleOnOrOff) obj.lens_mask.lens_mask_info.enabled = "on";
             var ret = await _httpClient.DoTapoCommand<TapoResult, PrivacyCall>(port, obj);
             if (ret == null)
                 return false;
             return true;
         }
 
-        public async Task<int[]> Scan()
-        {
-            var result = new List<int>();
-            var tasks = new List<Task>();
-            for (var port = 2; port < 254; port++)
-            {
-                tasks.Add(ScanPort(result, port));
-            }
-            await Task.WhenAll(tasks);
-            return await Task.FromResult(result.ToArray());
-        }
-
         private bool Ping(string url)
         {
-            Ping p = new Ping();
+            var p = new Ping();
             PingReply r;
             r = p.Send(url, 1000);
 
             return r.Status == IPStatus.Success;
         }
+
         private async Task<bool> ScanPort(List<int> result, int port)
         {
             try
@@ -126,8 +121,8 @@ namespace TapoMobileApp
             catch (Exception e)
             {
             }
+
             return false;
         }
-
     }
 }
