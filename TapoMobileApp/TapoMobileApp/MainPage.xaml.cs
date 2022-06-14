@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Android.Widget;
 using Plugin.AppShortcuts;
 using Plugin.AppShortcuts.Icons;
 using Xamarin.Forms;
-using Application = Android.App.Application;
 using Button = Xamarin.Forms.Button;
 
 namespace TapoMobileApp
