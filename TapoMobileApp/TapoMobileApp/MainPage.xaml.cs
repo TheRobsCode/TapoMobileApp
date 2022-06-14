@@ -33,7 +33,25 @@ namespace TapoMobileApp
             _ports.TextChanged += async (sender, e) => { await _ports_TextChanged(sender, e); };
             if (_storedProperties.ContainsKey(PortsConfig)) _ports.Text = _storedProperties.Get(PortsConfig);
 
+            //foreach (var item in Xamarin.Forms.Application.Current.Properties)
+            //{
+            //    LogMessage.Text += item.Key + "=" + item.Value;
+            //}
+            
+            CheckToEnableScan();
             Task.Run(async () => await AddShortcuts());
+        }
+
+        private void CheckToEnableScan()
+        {
+            try
+            {
+                Scan.IsEnabled = _ports.Text.Length == 0;
+            }
+            catch (Exception ex)
+            {
+                Scan.IsEnabled = false;
+            }
         }
 
         private async Task AddShortcuts()
@@ -74,6 +92,7 @@ namespace TapoMobileApp
 
         private async Task ScanButton_Clicked(object sender, EventArgs e)
         {
+            DisplayMessage("Working...");
             await Task.Run(() =>
                 Device.BeginInvokeOnMainThread(() => { SetButtonState(Scan, "Please Wait...", false); }));
 
@@ -86,7 +105,14 @@ namespace TapoMobileApp
             var message = "No Tapo Devices Found";
             if (ports.Any())
                 message = "Found: " + string.Join(",", ports);
-            Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            DisplayMessage(message);
+        }
+
+        private void DisplayMessage(string message)
+        {
+            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            StatusMessage.Text = message;
         }
 
         public async Task ButtonOn_Clicked(object sender, EventArgs e)
@@ -101,25 +127,30 @@ namespace TapoMobileApp
 
         public async Task ButtonCheck_Clicked(object sender, EventArgs e)
         {
+            DisplayMessage("Working...");
             var results = await _tapoService.CheckState(GetPorts());
 
             var message = string.Join("\r\n", results);
-            Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            DisplayMessage(message);
         }
 
         public async Task ChangeState(bool toggleOnOrOff)
         {
+            DisplayMessage("Working...");
             var errors = await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
             var message = "Done";
             if (errors.Count > 0)
                 message = "An Error Occured with ports:" + string.Join(",", errors);
 
-            Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
+            DisplayMessage(message);
         }
 
         private async Task _ports_TextChanged(object sender, TextChangedEventArgs e)
         {
             _storedProperties.Set(PortsConfig, e.NewTextValue);
+            CheckToEnableScan();
         }
 
         private int[] GetPorts()

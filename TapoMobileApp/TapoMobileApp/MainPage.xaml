@@ -11,6 +11,8 @@
         <Label Text="Ports:" FontSize="Title" Padding="30,10,30,10" />
         <Entry x:Name="_ports" Placeholder="PortNumbers" />
         <Button Text="Scan" x:Name="Scan" />
+        <Label x:Name="StatusMessage" LineBreakMode="WordWrap" Padding="30,10,30,10" FontSize="Title" />
+        <Label x:Name="LogMessage" LineBreakMode="WordWrap" Padding="30,10,30,10" FontSize="Title" />
     </StackLayout>
 
 </ContentPage>

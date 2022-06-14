@@ -25,7 +25,10 @@ namespace TapoMobileApp
         {
             var errors = new List<int>();
             var tasks = new List<Task>();
-            foreach (var port in ports) tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
+            foreach (var port in ports)
+            {
+                tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
+            }
             await Task.WhenAll(tasks);
             return errors;
         }
@@ -34,7 +37,10 @@ namespace TapoMobileApp
         {
             var results = new List<string>();
             var tasks = new List<Task>();
-            foreach (var port in ports) tasks.Add(LoginAndCheckPrivacy(port, results));
+            foreach (var port in ports)
+            {
+                tasks.Add(LoginAndCheckPrivacy(port, results));
+            }
             await Task.WhenAll(tasks);
 
             return await Task.FromResult(results);
@@ -44,7 +50,10 @@ namespace TapoMobileApp
         {
             var result = new List<int>();
             var tasks = new List<Task>();
-            for (var port = 2; port < 254; port++) tasks.Add(ScanPort(result, port));
+            for (var port = 2; port < 254; port++)
+            {
+                tasks.Add(ScanPort(result, port));
+            }
             await Task.WhenAll(tasks);
             return await Task.FromResult(result.ToArray());
         }
