@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@ namespace TapoMobileApp
         Task<List<string>> CheckState(int[] ports);
         Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff);
         Task<int[]> Scan();
+        Task Initialize(int[] ports);
     }
 
     public class TapoService : ITapoService
@@ -20,7 +22,15 @@ namespace TapoMobileApp
         {
             _httpClient = tapoHttpClient;
         }
-
+        public async Task Initialize(int[] ports)
+        {
+            if (ports == null || !ports.Any())
+                return;
+            foreach(var port in ports)
+            {
+                await _httpClient.DoLogin(port);
+            }
+        }
         public async Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff)
         {
             var errors = new List<int>();

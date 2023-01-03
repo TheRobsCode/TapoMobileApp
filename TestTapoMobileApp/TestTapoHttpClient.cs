@@ -81,6 +81,19 @@ namespace TestTapoMobileApp
         }
 
         [Fact]
+        public async Task TestDoLoginFails()
+        {
+            var fakeStoredProperties = A.Fake<IStoredProperties>();
+
+            var client = new MockTapoHttpClient(_fakeSettingsService, fakeStoredProperties);
+            client.SetFakeCommandReturns("LoginFails");
+
+            var ret = await client.DoLogin(1);
+
+            Assert.Null(ret);
+        }
+
+        [Fact]
         public async Task TestChangeStateCachedLoginFails()
         {
             var fakeStoredProperties = A.Fake<IStoredProperties>();

@@ -8,6 +8,7 @@
         <Button Text="Privacy On" x:Name="ButtonOn" />
         <Button Text="Privacy Off" x:Name="ButtonOff" />
         <Button Text="Check" x:Name="ButtonCheck" />
+        <Button Text="Clear" x:Name="ButtonClear" />
         <Label Text="Ports:" FontSize="Title" Padding="30,10,30,10" />
         <Entry x:Name="_ports" Placeholder="PortNumbers" />
         <Button Text="Scan" x:Name="Scan" />

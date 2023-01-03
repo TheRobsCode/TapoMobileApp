@@ -27,10 +27,14 @@ namespace TapoMobileApp
             ButtonOff.Clicked += async (sender, e) => { await ButtonOff_Clicked(sender, e); };
             ButtonOn.Clicked += async (sender, e) => { await ButtonOn_Clicked(sender, e); };
             ButtonCheck.Clicked += async (sender, e) => { await ButtonCheck_Clicked(sender, e); };
+            ButtonClear.Clicked += async (sender, e) => { await ButtonClear_Clicked(sender, e); };
             Scan.Clicked += async (sender, e) => { await ScanButton_Clicked(sender, e); };
             _ports.TextChanged += async (sender, e) => { await _ports_TextChanged(sender, e); };
-            if (_storedProperties.ContainsKey(PortsConfig)) _ports.Text = _storedProperties.Get(PortsConfig);
-
+            if (_storedProperties.ContainsKey(PortsConfig) && !string.IsNullOrEmpty(_storedProperties.Get(PortsConfig)))
+            {
+                _ports.Text = _storedProperties.Get(PortsConfig);
+                _tapoService.Initialize(GetPorts());
+            }
             //foreach (var item in Xamarin.Forms.Application.Current.Properties)
             //{
             //    LogMessage.Text += item.Key + "=" + item.Value;
@@ -122,17 +126,25 @@ namespace TapoMobileApp
         {
             await ChangeState(false);
         }
+        public async Task ButtonClear_Clicked(object sender, EventArgs e)
+        {
+            DisplayMessage("Working...");
+            _storedProperties.Clear();
+            DisplayMessage("Done");
+        }
 
         public async Task ButtonCheck_Clicked(object sender, EventArgs e)
         {
             DisplayMessage("Working...");
+            await CheckState();
+        }
+        private async Task CheckState()
+        {
             var results = await _tapoService.CheckState(GetPorts());
 
             var message = string.Join("\r\n", results);
-            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
             DisplayMessage(message);
         }
-
         public async Task ChangeState(bool toggleOnOrOff)
         {
             DisplayMessage("Working...");
@@ -143,6 +155,7 @@ namespace TapoMobileApp
 
             //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
             DisplayMessage(message);
+            await CheckState();
         }
 
         private async Task _ports_TextChanged(object sender, TextChangedEventArgs e)

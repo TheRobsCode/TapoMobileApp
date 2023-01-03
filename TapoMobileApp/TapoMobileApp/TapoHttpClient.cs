@@ -10,6 +10,7 @@ namespace TapoMobileApp
     {
         Task<TResult> DoTapoCommand<TResult, TCall>(int port, TCall callObj);
         Task<string> DoLogin(int port, bool useCache);
+        Task<string> DoLogin(int port);
     }
 
     public class TapoHttpClient : ITapoHttpClient
@@ -23,6 +24,22 @@ namespace TapoMobileApp
             _storedProperties = storedProperties;
         }
 
+
+        public async Task<string> DoLogin(int port)
+        {
+            string stok = null;
+            var retrys = new bool[10];
+            retrys[0] = true;
+            foreach (var useCache in retrys)
+            {
+                stok = await DoLogin(port, useCache);
+                if (string.IsNullOrEmpty(stok))
+                    continue;
+                return stok;
+            }
+            return stok;
+        }
+        
         public async Task<string> DoLogin(int port, bool useCache)
         {
             var stok = GetStokFromCache(port, useCache);
@@ -45,16 +62,15 @@ namespace TapoMobileApp
         public async Task<TResult> DoTapoCommand<TResult, TCall>(int port, TCall callObj)
         {
             var ret = default(TResult);
-            foreach (var useCache in new[] {true, false})
-            {
-                var stok = await DoLogin(port, useCache);
-                if (string.IsNullOrEmpty(stok))
-                    continue;
+            //foreach (var useCache in new[] {true, false})
+            //{
+                var stok = await DoLogin(port);
+
                 var url = GetIPAddress(port) + "/stok=" + stok + @"/ds"; //"/stok=" + loginStok + @"/ds"
                 ret = await DoTapoCommand<TResult, TCall>(url, callObj);
                 if (ret != null)
                     return ret;
-            }
+            //}
 
             return ret;
         }
