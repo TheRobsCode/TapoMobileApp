@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Threading.Tasks;
 using Xamarin.Forms;
 
 namespace TapoMobileApp
@@ -11,6 +12,7 @@ namespace TapoMobileApp
         void Set(string key, string obj);
         void Set<T>(string key, T obj);
         void Clear();
+        void Clear(int port);
     }
 
     public class StoredProperties : IStoredProperties
@@ -28,6 +30,13 @@ namespace TapoMobileApp
             }
         }
 
+        public void Clear(int port)
+        {
+            var key = "CacheProp" + port;
+            Application.Current.Properties.Remove(key);
+            Task.Run(async () => await Application.Current.SavePropertiesAsync());
+        }
+
         public bool ContainsKey(string key)
         {
             return Application.Current.Properties.ContainsKey(key);
@@ -35,6 +44,8 @@ namespace TapoMobileApp
 
         public string Get(string key)
         {
+            if (!Application.Current.Properties.ContainsKey(key))
+                return "";
             return Application.Current.Properties[key].ToString();
         }
 
@@ -53,16 +64,18 @@ namespace TapoMobileApp
 
         public void Set(string key, string obj)
         {
-            Application.Current.Properties.Remove(key);
+            if (Application.Current.Properties.ContainsKey(key))
+                Application.Current.Properties.Remove(key);
+
             Application.Current.Properties.Add(key, obj);
-            //await Application.Current.SavePropertiesAsync();
+            Task.Run(async () => await Application.Current.SavePropertiesAsync());
+            
         }
 
         public void Set<T>(string key, T obj)
         {
             var json = JsonConvert.SerializeObject(obj);
             Set(key, json);
-            //await Application.Current.SavePropertiesAsync();
         }
     }
 }

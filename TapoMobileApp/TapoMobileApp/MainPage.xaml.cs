@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Plugin.AppShortcuts;
@@ -22,8 +23,8 @@ namespace TapoMobileApp
             _storedProperties = new StoredProperties();
 
             var httpClient = new TapoHttpClient(settingService, _storedProperties);
-            //var loginProvider = new LoginProvider(httpClient, settingService);
-            _tapoService = new TapoService(httpClient);
+            httpClient.OnChanged += HttpClient_OnChanged;
+            _tapoService = new TapoService(httpClient, _storedProperties);
             ButtonOff.Clicked += async (sender, e) => { await ButtonOff_Clicked(sender, e); };
             ButtonOn.Clicked += async (sender, e) => { await ButtonOn_Clicked(sender, e); };
             ButtonCheck.Clicked += async (sender, e) => { await ButtonCheck_Clicked(sender, e); };
@@ -33,15 +34,67 @@ namespace TapoMobileApp
             if (_storedProperties.ContainsKey(PortsConfig) && !string.IsNullOrEmpty(_storedProperties.Get(PortsConfig)))
             {
                 _ports.Text = _storedProperties.Get(PortsConfig);
-                _tapoService.Initialize(GetPorts());
+                
             }
-            //foreach (var item in Xamarin.Forms.Application.Current.Properties)
-            //{
-            //    LogMessage.Text += item.Key + "=" + item.Value;
-            //}
-            
-            CheckToEnableScan();
+        }
+
+        private void DisplayMessage(List<TapoServiceEvent> messages)
+        {
+            foreach(var e in messages)
+            {
+                DisplayMessage(e.Port, e.Message);
+            }
+        }
+        private void DisplayMessage(int port, string message)
+        {
+            var name = "lblPort" + port;
+            if (!_portOutputDictionary.ContainsKey(name))
+                return;
+            var label = _portOutputDictionary[name];
+            if (label == null)
+                return;
+            label.Text = message;
+        }
+        private void HttpClient_OnChanged(object sender, TapoServiceEvent e)
+        {
+            DisplayMessage(e.Port, e.Message);
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+
+            SetupOutputLabels();
+            _tapoService.Initialize(GetPorts());
+
+            Task.Run( () => 
+            {
+                 Device.BeginInvokeOnMainThread(async () =>
+                {
+                    await CheckState();
+                });
+            });
             Task.Run(async () => await AddShortcuts());
+
+        }
+        private readonly Dictionary<string,Label> _portOutputDictionary = new Dictionary<string, Label>();
+        private void SetupOutputLabels()
+        {
+            //CameraOutput.Children.Clear();
+            foreach (var port in GetPorts())
+            {
+                var name = "lblPort" + port;
+
+                if (_portOutputDictionary.ContainsKey(name))
+                    continue;
+                var stack = new StackLayout();
+                var label = new Label() { FontSize = 22 };
+                stack.Orientation = StackOrientation.Horizontal;
+                stack.Children.Add(new Label { Text= "Port " + port + ":", FontSize = 22 });
+                stack.Children.Add(label);
+                _portOutputDictionary.Add(name, label);
+                CameraOutput.Children.Add(stack);
+            }
         }
 
         private void CheckToEnableScan()
@@ -107,13 +160,11 @@ namespace TapoMobileApp
             var message = "No Tapo Devices Found";
             if (ports.Any())
                 message = "Found: " + string.Join(",", ports);
-            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
             DisplayMessage(message);
         }
 
         private void DisplayMessage(string message)
         {
-            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
             StatusMessage.Text = message;
         }
 
@@ -135,26 +186,17 @@ namespace TapoMobileApp
 
         public async Task ButtonCheck_Clicked(object sender, EventArgs e)
         {
-            DisplayMessage("Working...");
             await CheckState();
         }
         private async Task CheckState()
         {
-            var results = await _tapoService.CheckState(GetPorts());
+            await _tapoService.CheckState(GetPorts());
 
-            var message = string.Join("\r\n", results);
-            DisplayMessage(message);
+            //DisplayMessage(results);
         }
         public async Task ChangeState(bool toggleOnOrOff)
         {
-            DisplayMessage("Working...");
-            var errors = await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
-            var message = "Done";
-            if (errors.Count > 0)
-                message = "An Error Occured with ports:" + string.Join(",", errors);
-
-            //Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
-            DisplayMessage(message);
+            await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
             await CheckState();
         }
 
@@ -162,11 +204,16 @@ namespace TapoMobileApp
         {
             _storedProperties.Set(PortsConfig, e.NewTextValue);
             CheckToEnableScan();
+            SetupOutputLabels();
         }
 
         private int[] GetPorts()
         {
-            var ports = _storedProperties.Get(PortsConfig).Split(',');
+            var portsStr = _storedProperties.Get(PortsConfig);
+            if (string.IsNullOrEmpty(portsStr))
+                return new int[0];
+
+            var ports = portsStr.Split(',');
             var result = new List<int>();
             foreach (var port in ports)
             {

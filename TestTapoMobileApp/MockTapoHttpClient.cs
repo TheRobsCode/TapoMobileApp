@@ -18,28 +18,28 @@ namespace TestTapoMobileApp
             _command = command;
         }
 
-        protected override async Task<TResult> DoTapoCommand<TResult, TCall>(string url, TCall callObj)
+        protected override async Task<(bool success, TResult result)> DoTapoCommandImp<TResult, TCall>(string url, TCall callObj)
         {
             if (_command == "HappyPathCachedLogin")
             {
                 var res = new TapoResult {error_code = 0, result = new Result {stok = "Stok"}};
                 var json = JsonConvert.SerializeObject(res);
-                return await Task.FromResult(JsonConvert.DeserializeObject<TResult>(json));
+                return (true, await Task.FromResult(JsonConvert.DeserializeObject<TResult>(json)));
             }
 
             if (_command == "HappyPathNoCachedLogin")
             {
                 var res = new TapoResult {error_code = 0, result = new Result {stok = "Stok"}};
                 var json = JsonConvert.SerializeObject(res);
-                return await Task.FromResult(JsonConvert.DeserializeObject<TResult>(json));
+                return (true, await Task.FromResult(JsonConvert.DeserializeObject<TResult>(json)));
             }
 
             if (_command == "LoginFails")
             {
-                return default;
+                return (false,default);
             }
 
-            return default;
+            return (false, default);
         }
     }
 }

@@ -1,20 +1,27 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Xamarin.Essentials;
 
 namespace TapoMobileApp
 {
     public interface ITapoHttpClient
     {
-        Task<TResult> DoTapoCommand<TResult, TCall>(int port, TCall callObj);
+        Task<(bool success,TResult tapoResult)> DoTapoCommand<TResult, TCall>(int port, TCall callObj) where TCall : ICall
+            where TResult : IResult;
         Task<string> DoLogin(int port, bool useCache);
         Task<string> DoLogin(int port);
+        event EventHandler<TapoServiceEvent> OnChanged;
+
     }
 
     public class TapoHttpClient : ITapoHttpClient
     {
+        public event EventHandler<TapoServiceEvent> OnChanged;
+
         private readonly ISettingsService _settings;
         private readonly IStoredProperties _storedProperties;
 
@@ -39,7 +46,7 @@ namespace TapoMobileApp
             }
             return stok;
         }
-        
+
         public async Task<string> DoLogin(int port, bool useCache)
         {
             var stok = GetStokFromCache(port, useCache);
@@ -50,29 +57,54 @@ namespace TapoMobileApp
             var obj = new LoginCall
             {
                 method = "login",
-                @params = new Params {hashed = true, password = _settings.Password, username = _settings.UserName}
+                @params = new Params { hashed = true, password = _settings.Password, username = _settings.UserName }
             };
-            var result = await DoTapoCommand<TapoResult, LoginCall>(url, obj);
-            if (result == null)
+            //OnChanged.Invoke(this, new TapoServiceEvent { Port = port, Message = "Starting " + obj.Call() });
+            RaiseOnChangeEvent(port, "Starting " + obj.Call());
+            var tapoComand = await DoTapoCommandImp<TapoResult, LoginCall>(url, obj);
+            if (!tapoComand.success)
                 return null;
-            StoreInCache(result.result.stok, port);
-            return result.result.stok;
+            StoreInCache(tapoComand.result.result.stok, port);
+            return tapoComand.result.result.stok;
         }
 
-        public async Task<TResult> DoTapoCommand<TResult, TCall>(int port, TCall callObj)
+        public async Task<(bool success,TResult tapoResult)> DoTapoCommand<TResult, TCall>(int port, TCall callObj) where TCall : ICall
+            where TResult : IResult
         {
-            var ret = default(TResult);
-            //foreach (var useCache in new[] {true, false})
-            //{
-                var stok = await DoLogin(port);
+            var useCache = true;
+            (bool success, TResult result) ret = (success: false, result: default);
+            for (var retryNum = 1; retryNum < 10; retryNum++)
+            {
+                try
+                {
+                    var stok = await DoLogin(port, useCache);
+                    useCache = false;
+                    var url = GetIPAddress(port) + "/stok=" + stok + @"/ds"; //"/stok=" + loginStok + @"/ds"
+                    RaiseOnChangeEvent(port, "Starting " + callObj.Call() + $"({retryNum})");
 
-                var url = GetIPAddress(port) + "/stok=" + stok + @"/ds"; //"/stok=" + loginStok + @"/ds"
-                ret = await DoTapoCommand<TResult, TCall>(url, callObj);
-                if (ret != null)
-                    return ret;
-            //}
+                    ret = await DoTapoCommandImp<TResult, TCall>(url, callObj);
 
+                    if (ret.success)
+                    {
+                        RaiseOnChangeEvent(port, callObj.Call() + " " + ret.result.Result());
+                        return ret;
+                    }
+                    RaiseOnChangeEvent(port, "Error " + callObj.Call());
+                }
+                catch (Exception ex)
+                {
+                    RaiseOnChangeEvent(port, "Error " + callObj.Call());
+                }
+
+            }
             return ret;
+        }
+
+        private void RaiseOnChangeEvent(int port, string message)
+        {
+            if (OnChanged == null)
+                return;
+            OnChanged.Invoke(this, new TapoServiceEvent { Port = port, Message = message });
         }
 
         private string GetIPAddress(int port)
@@ -101,7 +133,8 @@ namespace TapoMobileApp
             return prop.Stok;
         }
 
-        protected virtual async Task<TResult> DoTapoCommand<TResult, TCall>(string url, TCall callObj)
+        protected virtual async Task<(bool success,TResult result)> DoTapoCommandImp<TResult, TCall>(string url, TCall callObj) where TCall : ICall
+            where TResult : IResult
         {
             using (var httpClientHandler = new HttpClientHandler())
             {
@@ -109,7 +142,11 @@ namespace TapoMobileApp
                 {
                     return true;
                 };
-
+                var profiles = Connectivity.ConnectionProfiles;
+                if (!profiles.Contains(ConnectionProfile.WiFi))
+                {
+                    return (false, default);
+                }
                 using (var http = new HttpClient(httpClientHandler) {Timeout = TimeSpan.FromSeconds(15)})
                 {
                     var json = JsonConvert.SerializeObject(callObj);
@@ -122,11 +159,11 @@ namespace TapoMobileApp
                             return default;
                         var cont = await result.Content.ReadAsStringAsync();
                         var loginResult = JsonConvert.DeserializeObject<TResult>(cont);
-                        return loginResult;
+                        return (loginResult.IsSuccess() ,loginResult);
                     }
                     catch (Exception e)
                     {
-                        return default;
+                        return (false, default);
                     }
                 }
             }

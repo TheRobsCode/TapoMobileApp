@@ -1,9 +1,24 @@
 ﻿namespace TapoMobileApp
 {
-    public class TapoResult
+    public interface IResult
+    {
+        string Result();
+        bool IsSuccess();
+    }
+    public class TapoResult : IResult
     {
         public int error_code { get; set; }
         public Result result { get; set; }
+
+        public bool IsSuccess()
+        {
+            return error_code >= 0;
+        }
+
+        public string Result()
+        {
+            return "";
+        }
     }
 
     public class Result
@@ -12,10 +27,23 @@
         public string user_group { get; set; }
     }
 
-    public class PrivacyCheckResult
+    public class PrivacyCheckResult : IResult
     {
         public Lens_MaskResult lens_mask { get; set; }
         public int error_code { get; set; }
+
+        public bool IsSuccess()
+        {
+            return error_code >= 0;
+        }
+
+        public string Result()
+        {
+            if (lens_mask == null || lens_mask.lens_mask_info == null)
+                return "Error";
+            return lens_mask.lens_mask_info.enabled;
+        }
+
     }
 
     public class Lens_MaskResult

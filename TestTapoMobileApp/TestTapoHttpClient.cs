@@ -34,7 +34,7 @@ namespace TestTapoMobileApp
             var ret = await client.DoTapoCommand<TapoResult, PrivacyCall>(1, obj);
 
             Assert.NotNull(ret);
-            Assert.Equal(0, ret.error_code);
+            Assert.Equal(0, ret.tapoResult.error_code);
         }
 
         [Fact]
@@ -54,7 +54,7 @@ namespace TestTapoMobileApp
             var ret = await client.DoTapoCommand<TapoResult, PrivacyCall>(1, obj);
 
             Assert.NotNull(ret);
-            Assert.Equal(0, ret.error_code);
+            Assert.Equal(0, ret.tapoResult.error_code);
             //A.CallTo(() => fakeStoredProperties.Set(A<string>.Ignored, A<string>.Ignored)).MustHaveHappened();
             A.CallTo(fakeStoredProperties)
                 .Where(call => call.Method.Name == "Set").WithVoidReturnType().MustHaveHappened();
@@ -76,7 +76,7 @@ namespace TestTapoMobileApp
                 {method = "set", lens_mask = new LensMask {lens_mask_info = new LensMaskInfo {enabled = "off"}}};
             var ret = await client.DoTapoCommand<TapoResult, PrivacyCall>(1, obj);
 
-            Assert.Null(ret);
+            Assert.False(ret.success);
             A.CallTo(() => fakeStoredProperties.Set(A<string>.Ignored, A<object>.Ignored)).MustNotHaveHappened();
         }
 
@@ -109,7 +109,7 @@ namespace TestTapoMobileApp
                 {method = "set", lens_mask = new LensMask {lens_mask_info = new LensMaskInfo {enabled = "off"}}};
             var ret = await client.DoTapoCommand<TapoResult, PrivacyCall>(1, obj);
 
-            Assert.Null(ret);
+            Assert.False(ret.success);
             A.CallTo(() => fakeStoredProperties.Set(A<string>.Ignored, A<object>.Ignored)).MustNotHaveHappened();
         }
     }

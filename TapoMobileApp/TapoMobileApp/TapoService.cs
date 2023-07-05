@@ -6,20 +6,30 @@ using System.Threading.Tasks;
 
 namespace TapoMobileApp
 {
+    public class TapoServiceEvent : EventArgs
+    {
+        public string Message { get; set; }
+        public int Port { get; set; }
+    }
     public interface ITapoService
     {
-        Task<List<string>> CheckState(int[] ports);
-        Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff);
+        Task CheckState(int[] ports);
+        Task ChangeState(int[] ports, bool toggleOnOrOff);
         Task<int[]> Scan();
         Task Initialize(int[] ports);
+        event EventHandler<TapoServiceEvent> OnChanged;
     }
 
     public class TapoService : ITapoService
     {
-        private readonly ITapoHttpClient _httpClient;
+        public event EventHandler<TapoServiceEvent> OnChanged;
 
-        public TapoService(ITapoHttpClient tapoHttpClient)
+        private readonly ITapoHttpClient _httpClient;
+        private readonly IStoredProperties _storedProperties;
+
+        public TapoService(ITapoHttpClient tapoHttpClient, IStoredProperties storedProperties)
         {
+            _storedProperties = storedProperties;
             _httpClient = tapoHttpClient;
         }
         public async Task Initialize(int[] ports)
@@ -31,7 +41,7 @@ namespace TapoMobileApp
                 await _httpClient.DoLogin(port);
             }
         }
-        public async Task<List<int>> ChangeState(int[] ports, bool toggleOnOrOff)
+        public async Task ChangeState(int[] ports, bool toggleOnOrOff)
         {
             var errors = new List<int>();
             var tasks = new List<Task>();
@@ -40,20 +50,20 @@ namespace TapoMobileApp
                 tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
             }
             await Task.WhenAll(tasks);
-            return errors;
+            //return errors;
         }
 
-        public async Task<List<string>> CheckState(int[] ports)
+        public async Task CheckState(int[] ports)
         {
-            var results = new List<string>();
+            //var results = new List<TapoServiceEvent>();
             var tasks = new List<Task>();
             foreach (var port in ports)
             {
-                tasks.Add(LoginAndCheckPrivacy(port, results));
+                tasks.Add(LoginAndCheckPrivacy(port));
             }
             await Task.WhenAll(tasks);
 
-            return await Task.FromResult(results);
+            //return await Task.FromResult(results);
         }
 
         public async Task<int[]> Scan()
@@ -68,12 +78,11 @@ namespace TapoMobileApp
             return await Task.FromResult(result.ToArray());
         }
 
-        private async Task LoginAndCheckPrivacy(int port, List<string> results)
+        private async Task LoginAndCheckPrivacy(int port)
         {
             try
             {
-                var checkPrivacy = await CheckPrivacy(port);
-                results.Add(port + "- Privacy " + (checkPrivacy ? "on" : "off"));
+                await CheckPrivacy(port);
             }
             catch (Exception e)
             {
@@ -94,12 +103,11 @@ namespace TapoMobileApp
             }
         }
 
-        private async Task<bool> CheckPrivacy(int port)
+        private async Task CheckPrivacy(int port)
         {
             var obj = new PrivacyCheck {method = "get", lens_mask = new Lens_Mask {name = new[] {"lens_mask_info"}}};
 
-            var result = await _httpClient.DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(port, obj);
-            return result.lens_mask.lens_mask_info.enabled == "on";
+            await _httpClient.DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(port, obj);
         }
 
         private async Task<bool> ChangePrivacy(int port, bool toggleOnOrOff)
@@ -108,9 +116,7 @@ namespace TapoMobileApp
                 {method = "set", lens_mask = new LensMask {lens_mask_info = new LensMaskInfo {enabled = "off"}}};
             if (toggleOnOrOff) obj.lens_mask.lens_mask_info.enabled = "on";
             var ret = await _httpClient.DoTapoCommand<TapoResult, PrivacyCall>(port, obj);
-            if (ret == null)
-                return false;
-            return true;
+            return ret.success;
         }
 
         private bool Ping(string url)
