@@ -41,5 +41,10 @@ namespace TestTapoMobileApp
 
             return (false, default);
         }
+
+        protected override async Task CheckOnWifi(int port)
+        {
+            return;
+        }
     }
 }

@@ -35,11 +35,12 @@ namespace TapoMobileApp
         public async Task<string> DoLogin(int port)
         {
             string stok = null;
-            var retrys = new bool[10];
-            retrys[0] = true;
-            foreach (var useCache in retrys)
-            {
+            var useCache = true;
+
+            for (var retry =0;retry < 10; retry++)
+            { 
                 stok = await DoLogin(port, useCache);
+                useCache = false;
                 if (string.IsNullOrEmpty(stok))
                     continue;
                 return stok;
@@ -71,6 +72,8 @@ namespace TapoMobileApp
         public async Task<(bool success,TResult tapoResult)> DoTapoCommand<TResult, TCall>(int port, TCall callObj) where TCall : ICall
             where TResult : IResult
         {
+            await CheckOnWifi(port);
+
             var useCache = true;
             (bool success, TResult result) ret = (success: false, result: default);
             for (var retryNum = 1; retryNum < 10; retryNum++)
@@ -142,11 +145,7 @@ namespace TapoMobileApp
                 {
                     return true;
                 };
-                var profiles = Connectivity.ConnectionProfiles;
-                if (!profiles.Contains(ConnectionProfile.WiFi))
-                {
-                    return (false, default);
-                }
+
                 using (var http = new HttpClient(httpClientHandler) {Timeout = TimeSpan.FromSeconds(15)})
                 {
                     var json = JsonConvert.SerializeObject(callObj);
@@ -166,6 +165,25 @@ namespace TapoMobileApp
                         return (false, default);
                     }
                 }
+            }
+        }
+
+        protected virtual async Task CheckOnWifi(int port)
+        {
+            var waitingChars = new[] { '/', '-', '\\', '-' };
+            int i=0;
+            while (true)
+            {
+                var profiles = Connectivity.ConnectionProfiles;
+                if (profiles.Contains(ConnectionProfile.WiFi))
+                {
+                    return;
+                }
+                RaiseOnChangeEvent(port, waitingChars[i] + " Waiting For Wifi " + waitingChars[i]);
+                i++;
+                if (i >= waitingChars.Length)
+                    i = 0;
+                await Task.Delay(1000);
             }
         }
     }

@@ -14,10 +14,15 @@ namespace TapoMobileApp
     {
         private const string PortsConfig = "Ports";
         private readonly IStoredProperties _storedProperties;
-        private readonly ITapoService _tapoService;
+        protected readonly ITapoService _tapoService;
 
-        public MainPage()
+        public MainPage() : this(false)
         {
+            
+        }
+        public MainPage(bool running) 
+        {
+            _running = running;
             InitializeComponent();
             var settingService = new SettingsService();
             _storedProperties = new StoredProperties();
@@ -34,10 +39,23 @@ namespace TapoMobileApp
             if (_storedProperties.ContainsKey(PortsConfig) && !string.IsNullOrEmpty(_storedProperties.Get(PortsConfig)))
             {
                 _ports.Text = _storedProperties.Get(PortsConfig);
-                
             }
-        }
 
+            //new
+            SetupOutputLabels();
+            _tapoService.Initialize(GetPorts());
+
+            if (running)
+                return;
+
+            Task.Run(() =>
+            {
+                Device.BeginInvokeOnMainThread(async () =>
+                {
+                    await CheckState();
+                });
+            });
+        }
         private void DisplayMessage(List<TapoServiceEvent> messages)
         {
             foreach(var e in messages)
@@ -64,21 +82,26 @@ namespace TapoMobileApp
         {
             base.OnAppearing();
 
-            SetupOutputLabels();
-            _tapoService.Initialize(GetPorts());
-
-            Task.Run( () => 
-            {
-                 Device.BeginInvokeOnMainThread(async () =>
-                {
-                    await CheckState();
-                });
-            });
             Task.Run(async () => await AddShortcuts());
+            //SetupOutputLabels();
+            //_tapoService.Initialize(GetPorts());
+            //Task.Run(async () => await AddShortcuts());
+
+            //if (_running)
+            //    return;
+
+            //Task.Run( () => 
+            //{
+            //     Device.BeginInvokeOnMainThread(async () =>
+            //    {
+            //        await CheckState();
+            //    });
+            //});
+
 
         }
         private readonly Dictionary<string,Label> _portOutputDictionary = new Dictionary<string, Label>();
-        private void SetupOutputLabels()
+        protected void SetupOutputLabels()
         {
             //CameraOutput.Children.Clear();
             foreach (var port in GetPorts())
@@ -188,12 +211,13 @@ namespace TapoMobileApp
         {
             await CheckState();
         }
-        private async Task CheckState()
+        public async Task CheckState()
         {
             await _tapoService.CheckState(GetPorts());
 
             //DisplayMessage(results);
         }
+        private bool _running = false;
         public async Task ChangeState(bool toggleOnOrOff)
         {
             await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
@@ -207,7 +231,7 @@ namespace TapoMobileApp
             SetupOutputLabels();
         }
 
-        private int[] GetPorts()
+        protected int[] GetPorts()
         {
             var portsStr = _storedProperties.Get(PortsConfig);
             if (string.IsNullOrEmpty(portsStr))

@@ -29,9 +29,13 @@ namespace TapoMobileApp
             var option = uri.ToString().Replace(Constants.AppShortcutUriBase, "");
             if (!string.IsNullOrEmpty(option))
             {
-                var mainPage = new MainPage();
-                var turnOn = option == Constants.ShortcutTurnPrivacyOn;
-                Device.BeginInvokeOnMainThread(async () => await mainPage.ChangeState(turnOn));
+
+                Device.BeginInvokeOnMainThread(async () => {
+                    var mainPage = (MainPage)MainPage;
+                    var turnOn = option == Constants.ShortcutTurnPrivacyOn;
+                    await mainPage.ChangeState(turnOn);
+                });
+            
             }
             else
             {
