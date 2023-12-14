@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FakeItEasy;
-using TapoMobileApp;
 using Xunit;
+using TapoMobileApp;
 
 namespace TestTapoMobileApp
 {
@@ -53,7 +53,7 @@ namespace TestTapoMobileApp
 
             await tapoService.ChangeState(Enumerable.Range(1, 250).ToArray(), true);
             Assert.Equal("Privacy on ", message);
-            Assert.Equal(500, numCalls);
+            Assert.Equal(750, numCalls);
         }
 
         [Fact]

@@ -1,5 +1,5 @@
-﻿using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using System.Text.Json;
+using System.Threading.Tasks;
 using TapoMobileApp;
 
 namespace TestTapoMobileApp
@@ -18,28 +18,28 @@ namespace TestTapoMobileApp
             _command = command;
         }
 
-        protected override async Task<(bool success, TResult result)> DoTapoCommandImp<TResult, TCall>(string url, TCall callObj)
+        protected override async Task<TResult> DoTapoCommandImp<TResult, TCall>(string url, TCall callObj)
         {
             if (_command == "HappyPathCachedLogin")
             {
                 var res = new TapoResult {error_code = 0, result = new Result {stok = "Stok"}};
-                var json = JsonConvert.SerializeObject(res);
-                return (true, await Task.FromResult(JsonConvert.DeserializeObject<TResult>(json)));
+                var json = JsonSerializer.Serialize(res);
+                return await Task.FromResult(JsonSerializer.Deserialize<TResult>(json));
             }
 
             if (_command == "HappyPathNoCachedLogin")
             {
                 var res = new TapoResult {error_code = 0, result = new Result {stok = "Stok"}};
-                var json = JsonConvert.SerializeObject(res);
-                return (true, await Task.FromResult(JsonConvert.DeserializeObject<TResult>(json)));
+                var json = JsonSerializer.Serialize(res);
+                return await Task.FromResult(JsonSerializer.Deserialize<TResult>(json));
             }
 
             if (_command == "LoginFails")
             {
-                return (false,default);
+                return default;
             }
 
-            return (false, default);
+            return default;
         }
 
         protected override async Task CheckOnWifi(int port)
