@@ -10,6 +10,7 @@ namespace TapoMobileApp
         T Get<T>(string key);
         void Set(string key, string obj);
         void Set<T>(string key, T obj);
+        void Set<T>(int port, T obj);
         void Clear();
         void Clear(int port);
     }
@@ -75,6 +76,11 @@ namespace TapoMobileApp
         {
             var json = Json.Serialize(obj);
             Set(key, json);
+        }
+        public void Set<T>(int port, T obj)
+        {
+            var cacheProp = "CacheProp" + port;
+            Set(cacheProp, obj);
         }
     }
 }

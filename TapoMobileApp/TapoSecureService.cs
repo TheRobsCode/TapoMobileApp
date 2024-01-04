@@ -7,21 +7,6 @@
         { 
         }
 
-
-        public async Task CheckState(int[] ports)
-        {
-            //var results = new List<TapoServiceEvent>();
-            var tasks = new List<Task>();
-            foreach (var port in ports)
-            {
-                tasks.Add(LoginAndCheckPrivacy(port));
-            }
-            await Task.WhenAll(tasks);
-
-            //return await Task.FromResult(results);
-        }
-
-
         protected override async Task LoginAndCheckPrivacy(int port)
         {
             try

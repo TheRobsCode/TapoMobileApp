@@ -120,8 +120,7 @@ namespace TapoMobileApp
 
         private void StoreInCache(string stok, int port)
         {
-            var cacheProp = "CacheProp" + port;
-            _storedProperties.Set(cacheProp, new LoginCache {Stok = stok, ExpiryDate = DateTime.Now.Add(_cacheExpiry)});
+            _storedProperties.Set(port, new LoginCache {Stok = stok, ExpiryDate = DateTime.Now.Add(_cacheExpiry)});
         }
 
         protected LoginCache GetStokFromCache(int port, bool useCache)
@@ -192,27 +191,21 @@ namespace TapoMobileApp
             {
                 return false;
             }
-            return await Ping(port);
-        }
-        public async Task<bool> Ping(int port)
-        {
             return true;
-            var url = "http://192.168.1." + port;
-
-            using (var httpClient = new HttpClient() { Timeout = TimeSpan.FromSeconds(15) })
-            {
-                HttpRequestMessage request = new HttpRequestMessage
-                {
-                    RequestUri = new Uri(url),
-                    Method = HttpMethod.Head
-                };
-                var result = await httpClient.SendAsync(request);
-                return result.IsSuccessStatusCode;
-            }
-                //var httpClient = new HttpClient();
-
         }
-        /*public async Task<bool> Ping(int port)
+//        public async Task<bool> Ping(int port)
+//        {
+////#if ANDROID
+////            Java.Lang.Process p1 = Java.Lang.Runtime.GetRuntime().Exec("ping -c 1 192.168.1." + port);
+////            int returnVal = p1.WaitFor();
+////            return returnVal == 0;
+////#endif
+
+//            return true;
+
+
+//        }
+        public async Task<bool> Ping(int port)
         {
             try
             {
@@ -227,7 +220,7 @@ namespace TapoMobileApp
             {
                 return false;
             }
-        }*/
+        }
         protected async Task Delay()
         {
             await Task.Delay(1000);

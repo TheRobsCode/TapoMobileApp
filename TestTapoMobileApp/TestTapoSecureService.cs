@@ -96,5 +96,10 @@ namespace TestTapoMobileApp
             else
                 _cache.Add(key, JsonSerializer.Serialize(obj));
         }
+
+        public void Set<T>(int port, T obj)
+        {
+            Set(port.ToString(), obj);
+        }
     }
 }

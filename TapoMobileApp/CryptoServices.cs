@@ -17,15 +17,15 @@ namespace TapoMobileApp
         public static string GetPassword(string password, string nonce, string cnonce)
         {
             var pass = password.ToUpper();
-            return getHashSha256(pass + cnonce + nonce).ToUpper();
+            return GetHashSha256(pass + cnonce + nonce).ToUpper();
         }
-        public static string getHashSha256(string text)
+        public static string GetHashSha256(string text)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(text);
+            var bytes = Encoding.UTF8.GetBytes(text);
             var hashstring = SHA256.Create(); //new SHA256Managed();
-            byte[] hash = hashstring.ComputeHash(bytes);
-            string hashString = string.Empty;
-            foreach (byte x in hash)
+            var hash = hashstring.ComputeHash(bytes);
+            var hashString = string.Empty;
+            foreach (var x in hash)
             {
                 hashString += String.Format("{0:x2}", x);
             }
@@ -35,8 +35,8 @@ namespace TapoMobileApp
         private static byte[] GenerateEncryptionToken(string password, string tokenType, string cnonce, string nonce)
         {
             var pass = password.ToUpper();
-            var hashedKey = getHashSha256(cnonce + pass + nonce).ToUpper();
-            byte[] tokenBytes = Encoding.UTF8.GetBytes(tokenType + cnonce + nonce + hashedKey);
+            var hashedKey = GetHashSha256(cnonce + pass + nonce).ToUpper();
+            var tokenBytes = Encoding.UTF8.GetBytes(tokenType + cnonce + nonce + hashedKey);
             return SHA256.HashData(tokenBytes).Take(16).ToArray();
         }
 
@@ -80,8 +80,8 @@ namespace TapoMobileApp
 
         public static string GetTag(string password, LoginCache cache, object request)
         {
-            var pass = getHashSha256(password.ToUpper() + cache.CNonce).ToUpper();
-            var tag = getHashSha256(pass + Json.Serialize(request) + cache.Seq.ToString()).ToUpper();
+            var pass = GetHashSha256(password.ToUpper() + cache.CNonce).ToUpper();
+            var tag = GetHashSha256(pass + Json.Serialize(request) + cache.Seq.ToString()).ToUpper();
             return tag;
         }
 

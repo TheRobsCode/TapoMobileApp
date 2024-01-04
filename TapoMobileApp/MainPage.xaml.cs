@@ -8,7 +8,7 @@ namespace TapoMobileApp
     public partial class MainPage : ContentPage
     {
         private const string PortsConfig = "Ports";
-        private readonly IStoredProperties _storedProperties;
+        private readonly StoredProperties _storedProperties;
         protected readonly ITapoService _tapoService;
         public MainPage() : this(false)
         {
@@ -49,19 +49,12 @@ namespace TapoMobileApp
                 });
             });
         }
-        private void DisplayMessage(List<TapoServiceEvent> messages)
-        {
-            foreach (var e in messages)
-            {
-                DisplayMessage(e.Port, e.Message);
-            }
-        }
         private void DisplayMessage(int port, string message)
         {
             var name = "lblPort" + port;
-            if (!_portOutputDictionary.ContainsKey(name))
+            if (!_portOutputDictionary.TryGetValue(name, out Label? value))
                 return;
-            var label = _portOutputDictionary[name];
+            var label = value;
             if (label == null)
                 return;
             label.Text = message;
@@ -93,7 +86,7 @@ namespace TapoMobileApp
 
 
         }
-        private readonly Dictionary<string, Label> _portOutputDictionary = new Dictionary<string, Label>();
+        private readonly Dictionary<string, Label> _portOutputDictionary = [];
         protected void SetupOutputLabels()
         {
             //CameraOutput.Children.Clear();
@@ -174,7 +167,7 @@ namespace TapoMobileApp
             await Task.Run(() => MainThread.BeginInvokeOnMainThread(() => { SetButtonState(Scan, "Scan", true); }));
 
             var message = "No Tapo Devices Found";
-            if (ports.Any())
+            if (ports.Length != 0)
                 message = "Found: " + string.Join(",", ports);
             DisplayMessage(message);
         }
@@ -228,7 +221,7 @@ namespace TapoMobileApp
         {
             string portsStr = _storedProperties.Get(PortsConfig);
             if (string.IsNullOrEmpty(portsStr))
-                return new int[0];
+                return [];
 
             var ports = portsStr.Split(',');
             var result = new List<int>();
@@ -241,7 +234,7 @@ namespace TapoMobileApp
                 result.Add(portNum);
             }
 
-            return result.ToArray();
+            return [.. result];
         }
     }
 

@@ -7,7 +7,7 @@ namespace TapoMobileApp
     {
         public TapoSecureHttpClient(ISettingsService settingsService, IStoredProperties storedProperties) : base(settingsService, storedProperties)
         {
-            _cacheExpiry = TimeSpan.FromSeconds(30);
+            _cacheExpiry = TimeSpan.FromMinutes(30);
         }
 
         public override async Task<LoginCache> DoLogin(int port, bool useCache)
@@ -24,6 +24,9 @@ namespace TapoMobileApp
             };
             RaiseOnChangeEvent(port, "Starting " + obj.Call());
             var tapoComand = await DoTapoCommandImp<SecureLogin, SecureLoginCall>(url, obj);
+            if (tapoComand == null)
+                return null;
+
             cache.Nonce = tapoComand.result.data.nonce;
 
             if (!tapoComand.IsSuccess())
@@ -92,6 +95,8 @@ namespace TapoMobileApp
                     if (httpResult.TryGetResult(lsk, ivb, out var response) && response.IsSuccess())
                     {
                         RaiseOnChangeEvent(port, callObj.Call() + " " + response.Result());
+                        cache.Seq++;
+                        _storedProperties.Set(port, cache);
                         return response;
                     }
                     RaiseOnChangeEvent(port, "Error " + callObj.Call());
@@ -105,18 +110,6 @@ namespace TapoMobileApp
             return ret;
         }
 
-        //private void WriteOut(string str, string json)
-        //{
-        //    System.IO.File.AppendAllText("output.txt", str + ":\r\n");
-        //    System.IO.File.AppendAllText("output.txt", json + "\r\n");
-        //}
-        //private void WriteOut(string str, object obj) 
-        //{
-        //    var output = Json.Serialize(obj);
-        //    System.IO.File.AppendAllText("output.txt", str + ":\r\n");
-        //    System.IO.File.AppendAllText("output.txt", output + "\r\n");
-        //}
-
         private Dictionary<string, string> GetHeaders(SecurePassthrough secureRequest, LoginCache cache)
         {
             var result = new Dictionary<string, string>();
@@ -128,24 +121,9 @@ namespace TapoMobileApp
 
         private void StoreInCache(LoginCache obj, int port)
         {
-            var cacheProp = "CacheProp" + port;
+            
             obj.ExpiryDate = DateTime.Now.Add(_cacheExpiry);
-            _storedProperties.Set(cacheProp, obj);
-        }
-
-        private LoginCache GetStokFromCache(int port, bool useCache)
-        {
-            var cacheProp = "CacheProp" + port;
-            if (!useCache)
-                return null;
-            if (!_storedProperties.ContainsKey(cacheProp))
-                return null;
-            var prop = _storedProperties.Get<LoginCache>(cacheProp);
-            if (prop == null)
-                return null;
-            if (prop.ExpiryDate < DateTime.Now)
-                return null;
-            return prop;
+            _storedProperties.Set(port, obj);
         }
 
         protected virtual async Task<TResult> DoTapoCommandImp<TResult, TCall>(string url, TCall callObj, Dictionary<string,string> headers= null) where TCall : ICall

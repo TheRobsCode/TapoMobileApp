@@ -18,13 +18,14 @@ namespace TapoMobileApp
                 .ConfigureEssentials(essentials =>
                 {
                     essentials
-                        .AddAppAction("privacy_on", "Privacy On", icon: "app_info_action_icon")
+                        .AddAppAction("privacy_on", "Privacy On") //, icon: "app_info_action_icon"
                         .AddAppAction("privacy_off", "Privacy Off")
                         .OnAppAction(App.HandleAppActions);
-                }); 
+                });
+
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();
