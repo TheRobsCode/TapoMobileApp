@@ -2,6 +2,9 @@
 //using Android.Content.PM;
 //using static Android.Service.Notification.NotificationListenerService;
 
+using Microsoft.Maui.Controls.PlatformConfiguration;
+using System.Xml.Linq;
+
 namespace TapoMobileApp
 {
 
@@ -20,7 +23,8 @@ namespace TapoMobileApp
             var settingService = new SettingsService();
             _storedProperties = new StoredProperties();
 
-            var httpClient = new TapoSecureHttpClient(settingService, _storedProperties);
+             var httpClient = new TapoSecureHttpClient(settingService, _storedProperties);
+
             httpClient.OnChanged += HttpClient_OnChanged;
             _tapoService = new TapoSecureService(httpClient, _storedProperties);
             ButtonOff.Clicked += async (sender, e) => { await ButtonOff_Clicked(sender, e); };
@@ -33,7 +37,7 @@ namespace TapoMobileApp
             {
                 _ports.Text = _storedProperties.Get(PortsConfig);
             }
-
+            ShowLogs();
             //new
             SetupOutputLabels();
             _tapoService.Initialize(GetPorts());
@@ -49,6 +53,7 @@ namespace TapoMobileApp
                 });
             });
         }
+
         private void DisplayMessage(int port, string message)
         {
             var name = "lblPort" + port;
@@ -67,24 +72,6 @@ namespace TapoMobileApp
         protected override void OnAppearing()
         {
             base.OnAppearing();
-
-            //Task.Run(async () => await AddShortcuts());
-            //SetupOutputLabels();
-            //_tapoService.Initialize(GetPorts());
-            //Task.Run(async () => await AddShortcuts());
-
-            //if (_running)
-            //    return;
-
-            //Task.Run( () => 
-            //{
-            //     Device.BeginInvokeOnMainThread(async () =>
-            //    {
-            //        await CheckState();
-            //    });
-            //});
-
-
         }
         private readonly Dictionary<string, Label> _portOutputDictionary = [];
         protected void SetupOutputLabels()
@@ -105,7 +92,7 @@ namespace TapoMobileApp
                 CameraOutput.Children.Add(stack);
             }
         }
-
+        
         private void CheckToEnableScan()
         {
             try
@@ -117,36 +104,19 @@ namespace TapoMobileApp
                 Scan.IsEnabled = false;
             }
         }
+        public void ShowLogs()
+        {
+            var stack = new StackLayout();
+            var label = new Label() { FontSize = 22 };
+            stack.Orientation = StackOrientation.Horizontal;
+            var log = _storedProperties.Get("log");
+            if (string.IsNullOrEmpty(log))
+                return;
 
-        //private async Task AddShortcuts()
-        //{
-        //    if (!CrossAppShortcuts.IsSupported) return;
-
-        //    var shortCurts = await CrossAppShortcuts.Current.GetShortcuts();
-        //    if (shortCurts.FirstOrDefault(prop => prop.Label == "Privacy On") == null)
-        //    {
-        //        var shortcut = new Shortcut
-        //        {
-        //            Label = "Privacy On",
-        //            Description = "Turn Privacy On",
-        //            Icon = new PauseIcon(),
-        //            Uri = $"{Constants.AppShortcutUriBase}{Constants.ShortcutTurnPrivacyOn}"
-        //        };
-        //        await CrossAppShortcuts.Current.AddShortcut(shortcut);
-        //    }
-
-        //    if (shortCurts.FirstOrDefault(prop => prop.Label == "Privacy Off") == null)
-        //    {
-        //        var shortcut = new Shortcut
-        //        {
-        //            Label = "Privacy Off",
-        //            Description = "Turn Privacy Off",
-        //            Icon = new PlayIcon(),
-        //            Uri = $"{Constants.AppShortcutUriBase}{Constants.ShortcutTurnPrivacyOff}"
-        //        };
-        //        await CrossAppShortcuts.Current.AddShortcut(shortcut);
-        //    }
-        //}
+            stack.Children.Add(new Label { Text = log, FontSize = 22 });
+            stack.Children.Add(label);
+            CameraOutput.Children.Add(stack);
+        }
 
         private void SetButtonState(Button button, string text, bool enabled)
         {
@@ -206,8 +176,15 @@ namespace TapoMobileApp
         private bool _running = false;
         public async Task ChangeState(bool toggleOnOrOff)
         {
-            await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
-            await CheckState();
+            try
+            {
+                await _tapoService.ChangeState(GetPorts(), toggleOnOrOff);
+                await CheckState();
+            }
+            catch (Exception ex)
+            {
+                _storedProperties.StoreLog(ex.Message + ex.InnerException);
+            }
         }
 
         private async Task _ports_TextChanged(object sender, TextChangedEventArgs e)

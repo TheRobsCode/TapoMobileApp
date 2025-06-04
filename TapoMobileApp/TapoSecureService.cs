@@ -4,7 +4,7 @@
     public class TapoSecureService : TapoService
     {
         public TapoSecureService(ITapoHttpClient tapoHttpClient, IStoredProperties storedProperties) : base(tapoHttpClient, storedProperties)
-        { 
+        {
         }
 
         protected override async Task LoginAndCheckPrivacy(int port)
@@ -15,14 +15,20 @@
             }
             catch (Exception e)
             {
+                _storedProperties.StoreLog(e.Message + e.InnerException);
             }
         }
 
         protected override async Task LoginAndChangePrivacy(int port, bool toggleOnOrOff, List<int> errors)
         {
-
-            await ChangePrivacy(port, toggleOnOrOff);
-
+            try
+            {
+                await ChangePrivacy(port, toggleOnOrOff);
+            }
+            catch (Exception e)
+            {
+                _storedProperties.StoreLog(e.Message + e.InnerException);
+            }
         }
 
         private async Task CheckPrivacy(int port)

@@ -8,11 +8,13 @@ namespace TapoMobileApp
         bool ContainsKey(string key);
         string Get(string key);
         T Get<T>(string key);
+        T Get<T>(int port);
         void Set(string key, string obj);
         void Set<T>(string key, T obj);
         void Set<T>(int port, T obj);
         void Clear();
         void Clear(int port);
+        void StoreLog(string error);
     }
 
     public class StoredProperties : IStoredProperties
@@ -48,7 +50,11 @@ namespace TapoMobileApp
                 return "";
             return Preferences.Get(key,"").ToString();
         }
-
+        public T Get<T>(int port)
+        {
+            var cacheProp = "CacheProp" + port;
+            return Get<T>(cacheProp);
+        }
         public T Get<T>(string key)
         {
             if (!Preferences.ContainsKey(key))
@@ -81,6 +87,11 @@ namespace TapoMobileApp
         {
             var cacheProp = "CacheProp" + port;
             Set(cacheProp, obj);
+        }
+
+        public void StoreLog(string error)
+        {
+            Set("log", error);
         }
     }
 }

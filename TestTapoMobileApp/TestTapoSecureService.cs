@@ -9,7 +9,7 @@ namespace TestTapoMobileApp
         private readonly IStoredProperties _storedProperties;
         private readonly ITapoHttpClient _httpClient;
         private readonly ITapoService _tapoService;
-        private readonly int[] _ports = new[] {14,105 };
+        private readonly int[] _ports = new[] {14 };
         private string _message;
         public TestTapoSecureService()
         {
@@ -84,6 +84,12 @@ namespace TestTapoMobileApp
             return JsonSerializer.Deserialize<T>(_cache[key]);
         }
 
+        public T Get<T>(int port)
+        {
+            var cacheProp = "CacheProp" + port;
+            return Get<T>(cacheProp);
+        }
+
         public void Set(string key, string obj)
         {
             _cache[key] = obj;
@@ -101,5 +107,11 @@ namespace TestTapoMobileApp
         {
             Set(port.ToString(), obj);
         }
+
+        public void StoreLog(string error)
+        {
+            Set("log", error);
+        }
+    
     }
 }
