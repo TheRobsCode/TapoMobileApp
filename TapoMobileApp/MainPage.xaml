@@ -14,8 +14,8 @@
         <StackLayout x:Name="CameraOutput" Padding="30,10,30,10">
 
         </StackLayout>
-        <Label x:Name="StatusMessage" LineBreakMode="WordWrap" Padding="30,10,30,10" FontSize="Title" />
-        <Label x:Name="LogMessage" LineBreakMode="WordWrap" Padding="30,10,30,10" FontSize="Title" />
+        <Label x:Name="StatusMessage"  LineBreakMode="WordWrap" Padding="30,10,30,10" FontSize="Title" />
+        <Editor x:Name="LogMessage" FontSize="Title" />
     </StackLayout>
 
 </ContentPage>

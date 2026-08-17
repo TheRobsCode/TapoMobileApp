@@ -1,6 +1,6 @@
 ﻿namespace TapoMobileApp
 {
-    
+
     public class TapoSecureService : TapoService
     {
         public TapoSecureService(ITapoHttpClient tapoHttpClient, IStoredProperties storedProperties) : base(tapoHttpClient, storedProperties)

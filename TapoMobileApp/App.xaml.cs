@@ -9,24 +9,28 @@ namespace TapoMobileApp
         public App()
         {
             InitializeComponent();
-
-            //MainPage = new AppShell();
-            MainPage = new MainPage();
         }
-        
+
+        protected override Window CreateWindow(IActivationState activationState)
+        {
+            return new Window(new MainPage());
+        }
+
         public static void HandleAppActions(AppAction appAction)
         {
             _ = Current.Dispatcher.Dispatch(async () =>
             {
-                var mainPage = (MainPage)App.Current.MainPage;
-                if (appAction.Id == "privacy_on")
+                if (App.Current.Windows.Count > 0 && App.Current.Windows[0].Page is MainPage mainPage)
                 {
-                    await mainPage.ChangeState(true);
-
+                    if (appAction.Id == "privacy_on")
+                    {
+                        await mainPage.ChangeState(true);
+                    }
+                    else
+                    {
+                        await mainPage.ChangeState(false);
+                    }
                 }
-                else
-                    await mainPage.ChangeState(false);
-
             });
         }
     }
