@@ -2,8 +2,14 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using FakeItEasy;
-using TapoMobileApp;
 using Xunit;
+using TapoMobileApp.Models.Responses.Authentication;
+using TapoMobileApp.Models.Responses.Base;
+using TapoMobileApp.Models.Responses.Privacy;
+using TapoMobileApp.Services.Configuration;
+using TapoMobileApp.Services.Http;
+using TapoMobileApp.Services.Storage;
+using TapoMobileApp.Services.Tapo;
 
 namespace TestTapoMobileApp
 {
@@ -20,7 +26,7 @@ namespace TestTapoMobileApp
             var fakeHttpClient = A.Fake<ITapoHttpClient>();
             A.CallTo(fakeHttpClient)
                 .Where(call => call.Method.Name == "DoTapoCommand").WithNonVoidReturnType()
-                .Returns(Task.FromResult(new TapoResult {result = new Result {stok = "test"}}));
+                .Returns(Task.FromResult(new TapoResult {result = new LoginResult {stok = "test"}}));
             var tapoService = new TapoService(fakeHttpClient, _storedProperties);
             //var result = await tapoService.ChangeState(new[] {1}, true);
 
@@ -63,7 +69,7 @@ namespace TestTapoMobileApp
             A.CallTo(fakeHttpClient)
                 .Where(call => call.Method.Name == "DoTapoCommand").WithNonVoidReturnType().Returns(
                     Task.FromResult(new PrivacyCheckResult
-                        {lens_mask = new Lens_MaskResult {lens_mask_info = new Lens_Mask_Info {enabled = "on"}}}));
+                        {lens_mask = new LensMaskResult {lens_mask_info = new LensMaskInfoResult {enabled = "on"}}}));
             var tapoService = new TapoService(fakeHttpClient, _storedProperties);
             await tapoService.CheckState(new[] {1});
 
