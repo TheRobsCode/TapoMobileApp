@@ -32,7 +32,7 @@ namespace TapoMobileApp.Services.Configuration
                     var j = JsonSerializer.Deserialize<Settings>(json, options);
 
                     UserName = j.UserName;
-                    Password = CreateMD5(j.Password);
+                    Password = j.Password; //CreateMD5(j.Password); - Store the password in settings.json already md5'ed
                     IpPrefix = j.IpPrefix ?? "192.168.1";
                 }
             }
