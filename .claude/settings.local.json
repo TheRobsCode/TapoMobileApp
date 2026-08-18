@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(dir \"R:\\\\TempCode\\\\TapoMobileApp\\\\TapoMobileApp\" /B)",
-      "Bash(dotnet build:*)",
-      "Bash(grep:*)"
-    ]
-  }
-}
