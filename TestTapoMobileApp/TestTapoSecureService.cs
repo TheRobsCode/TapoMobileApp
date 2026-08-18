@@ -1,4 +1,8 @@
-using TapoMobileApp;
+using TapoMobileApp.Events;
+using TapoMobileApp.Services.Configuration;
+using TapoMobileApp.Services.Http;
+using TapoMobileApp.Services.Storage;
+using TapoMobileApp.Services.Tapo;
 using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using System.Text.Json;
 
@@ -54,6 +58,8 @@ namespace TestTapoMobileApp
         public string UserName { get; set; }
 
         public string Password { get; set; }
+
+        public string IpPrefix { get; set; } = "192.168.1";
     }
 
     public class MockStoredProperties : IStoredProperties

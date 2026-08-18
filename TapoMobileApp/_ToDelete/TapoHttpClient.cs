@@ -115,7 +115,7 @@ namespace TapoMobileApp
 
         protected string GetIPAddress(int port)
         {
-            return "https://192.168.1." + port;
+            return $"https://{_settings.IpPrefix}.{port}";
         }
 
         private void StoreInCache(string stok, int port)
@@ -162,8 +162,9 @@ namespace TapoMobileApp
                         var loginResult = Json.Deserialize<TResult>(cont);
                         return loginResult;
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
+                        _storedProperties.StoreLog($"Error in {nameof(DoTapoCommandImp)} to {url}: {ex.Message}");
                         return default;
                     }
                 }
@@ -193,18 +194,7 @@ namespace TapoMobileApp
             }
             return true;
         }
-//        public async Task<bool> Ping(int port)
-//        {
-////#if ANDROID
-////            Java.Lang.Process p1 = Java.Lang.Runtime.GetRuntime().Exec("ping -c 1 192.168.1." + port);
-////            int returnVal = p1.WaitFor();
-////            return returnVal == 0;
-////#endif
 
-//            return true;
-
-
-//        }
         public async Task<bool> Ping(int port)
         {
             try

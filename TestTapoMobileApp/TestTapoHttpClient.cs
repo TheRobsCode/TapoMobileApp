@@ -1,7 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using FakeItEasy;
-using TapoMobileApp;
+using TapoMobileApp.Models.Requests.Privacy;
+using TapoMobileApp.Models.Responses.Base;
+using TapoMobileApp.Services.Configuration;
+using TapoMobileApp.Services.Http;
+using TapoMobileApp.Services.Storage;
 using Xunit;
 
 namespace TestTapoMobileApp

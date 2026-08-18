@@ -216,14 +216,17 @@ namespace TapoMobileApp
 
         public bool IsSuccess()
         {
-            return error_code >= 0 && result.responses[0].result.lens_mask != null && result.responses[0].result.lens_mask.lens_mask_info != null;
+            return error_code >= 0
+                && result?.responses != null
+                && result.responses.Length > 0
+                && result.responses[0]?.result?.lens_mask?.lens_mask_info != null;
         }
 
         public string Result()
         {
-            if (result.responses.Length > 0 && !string.IsNullOrEmpty(result.responses[0].msg))
+            if (result?.responses != null && result.responses.Length > 0 && !string.IsNullOrEmpty(result.responses[0].msg))
                 return result.responses[0].msg;
-            return result.responses[0].result.lens_mask.lens_mask_info.enabled;
+            return result?.responses?[0]?.result?.lens_mask?.lens_mask_info?.enabled ?? string.Empty;
         }
     }
 

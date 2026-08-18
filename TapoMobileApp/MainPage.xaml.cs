@@ -1,6 +1,8 @@
-﻿using Microsoft.Maui.Controls.PlatformConfiguration;
-using System.Diagnostics;
-using System.Xml.Linq;
+﻿using TapoMobileApp.Events;
+using TapoMobileApp.Services.Configuration;
+using TapoMobileApp.Services.Http;
+using TapoMobileApp.Services.Storage;
+using TapoMobileApp.Services.Tapo;
 
 namespace TapoMobileApp
 {
@@ -97,8 +99,9 @@ namespace TapoMobileApp
             {
                 Scan.IsEnabled = string.IsNullOrEmpty(_ports.Text);
             }
-            catch
+            catch (Exception ex)
             {
+                _storedProperties.StoreLog($"Error in {nameof(CheckToEnableScan)}: {ex.Message}");
                 Scan.IsEnabled = false;
             }
         }
@@ -109,11 +112,6 @@ namespace TapoMobileApp
             if (string.IsNullOrEmpty(log))
                 return;
             LogMessage.Text = log.Replace("\n", "");
-            //var stack = new StackLayout { Orientation = StackOrientation.Horizontal };
-            //var label = new Label { FontSize = 22 };
-            //stack.Children.Add(new Label { Text = log, FontSize = 22 });
-            //stack.Children.Add(label);
-            //CameraOutput.Children.Add(stack);
         }
 
         private void SetButtonState(Button button, string text, bool enabled)

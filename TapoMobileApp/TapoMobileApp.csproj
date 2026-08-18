@@ -76,9 +76,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="settings.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+	  <EmbeddedResource Include="settings.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Compile Remove="_ToDelete\**" />
+	  <EmbeddedResource Remove="_ToDelete\**" />
+	  <MauiCss Remove="_ToDelete\**" />
+	  <MauiXaml Remove="_ToDelete\**" />
+	  <None Remove="_ToDelete\**" />
 	</ItemGroup>
 
 </Project>

@@ -84,8 +84,9 @@ namespace TapoMobileApp
             {
                 await CheckPrivacy(port);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                _storedProperties.StoreLog($"Error in {nameof(LoginAndCheckPrivacy)} for port {port}: {ex.Message}");
             }
         }
 
@@ -97,8 +98,9 @@ namespace TapoMobileApp
                 if (!changePrivacy)
                     errors.Add(port);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                _storedProperties.StoreLog($"Error in {nameof(LoginAndChangePrivacy)} for port {port}: {ex.Message}");
                 errors.Add(port);
             }
         }
@@ -125,7 +127,7 @@ namespace TapoMobileApp
         {
             try
             {
-                
+
                 if (!await _httpClient.Ping(port))
                     return false;
 
@@ -136,8 +138,9 @@ namespace TapoMobileApp
                     return true;
                 }
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
+                _storedProperties.StoreLog($"Error scanning port {port}: {ex.Message}");
             }
 
             return false;

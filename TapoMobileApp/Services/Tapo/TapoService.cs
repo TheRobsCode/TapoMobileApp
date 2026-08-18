@@ -1,0 +1,136 @@
+using TapoMobileApp.Events;
+using TapoMobileApp.Models.Requests.Privacy;
+using TapoMobileApp.Models.Responses.Base;
+using TapoMobileApp.Models.Responses.Privacy;
+using TapoMobileApp.Services.Http;
+using TapoMobileApp.Services.Storage;
+
+namespace TapoMobileApp.Services.Tapo
+{
+    public class TapoService : ITapoService
+    {
+        private const int MinPort = 2;
+        private const int MaxPort = 254;
+        private const int MaxRetries = 10;
+
+        public event EventHandler<TapoServiceEvent> OnChanged;
+
+        protected readonly ITapoHttpClient _httpClient;
+        protected readonly IStoredProperties _storedProperties;
+
+        public TapoService(ITapoHttpClient tapoHttpClient, IStoredProperties storedProperties)
+        {
+            _storedProperties = storedProperties;
+            _httpClient = tapoHttpClient;
+        }
+        public virtual async Task Initialize(int[] ports)
+        {
+            if (ports == null || !ports.Any())
+                return;
+            foreach(var port in ports)
+            {
+                await _httpClient.DoLogin(port);
+            }
+        }
+        public async Task ChangeState(int[] ports, bool toggleOnOrOff)
+        {
+            var errors = new List<int>();
+            var tasks = new List<Task>();
+            foreach (var port in ports)
+            {
+                tasks.Add(LoginAndChangePrivacy(port, toggleOnOrOff, errors));
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public async Task CheckState(int[] ports)
+        {
+            var tasks = new List<Task>();
+            foreach (var port in ports)
+            {
+                tasks.Add(LoginAndCheckPrivacy(port));
+            }
+            await Task.WhenAll(tasks);
+        }
+
+        public async Task<int[]> Scan()
+        {
+            var result = new List<int>();
+            var tasks = new List<Task>();
+            for (var port = MinPort; port < MaxPort; port++)
+            {
+                tasks.Add(ScanPort(result, port));
+            }
+            await Task.WhenAll(tasks);
+            return await Task.FromResult(result.ToArray());
+        }
+
+        protected virtual async Task LoginAndCheckPrivacy(int port)
+        {
+            try
+            {
+                await CheckPrivacy(port);
+            }
+            catch (Exception ex)
+            {
+                _storedProperties.StoreLog($"Error in {nameof(LoginAndCheckPrivacy)} for port {port}: {ex.Message}");
+            }
+        }
+
+        protected virtual async Task LoginAndChangePrivacy(int port, bool toggleOnOrOff, List<int> errors)
+        {
+            try
+            {
+                var changePrivacy = await ChangePrivacy(port, toggleOnOrOff);
+                if (!changePrivacy)
+                    errors.Add(port);
+            }
+            catch (Exception ex)
+            {
+                _storedProperties.StoreLog($"Error in {nameof(LoginAndChangePrivacy)} for port {port}: {ex.Message}");
+                errors.Add(port);
+            }
+        }
+
+        private async Task CheckPrivacy(int port)
+        {
+            var obj = new PrivacyCheck {method = "get", lens_mask = new LensMaskName {name = new[] {"lens_mask_info"}}};
+
+            await _httpClient.DoTapoCommand<PrivacyCheckResult, PrivacyCheck>(port, obj);
+        }
+
+        protected virtual async Task<bool> ChangePrivacy(int port, bool toggleOnOrOff)
+        {
+            var obj = new PrivacyCall
+                {method = "set", lens_mask = new LensMask {lens_mask_info = new LensMaskInfo {enabled = "off"}}};
+            if (toggleOnOrOff) obj.lens_mask.lens_mask_info.enabled = "on";
+            var ret = await _httpClient.DoTapoCommand<TapoResult, PrivacyCall>(port, obj);
+            return ret.IsSuccess();
+        }
+
+
+
+        private async Task<bool> ScanPort(List<int> result, int port)
+        {
+            try
+            {
+
+                if (!await _httpClient.Ping(port))
+                    return false;
+
+                var login = await _httpClient.DoLogin(port, false);
+                if (!string.IsNullOrEmpty(login.Nonce))
+                {
+                    result.Add(port);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _storedProperties.StoreLog($"Error scanning port {port}: {ex.Message}");
+            }
+
+            return false;
+        }
+    }
+}

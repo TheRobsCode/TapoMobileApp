@@ -1,6 +1,12 @@
 ﻿using System.Text.Json;
 using System.Threading.Tasks;
-using TapoMobileApp;
+using TapoMobileApp.Models.Requests.Base;
+using TapoMobileApp.Models.Responses.Authentication;
+using TapoMobileApp.Models.Responses.Base;
+using TapoMobileApp.Models.Responses.Privacy;
+using TapoMobileApp.Services.Configuration;
+using TapoMobileApp.Services.Http;
+using TapoMobileApp.Services.Storage;
 
 namespace TestTapoMobileApp
 {
@@ -22,14 +28,14 @@ namespace TestTapoMobileApp
         {
             if (_command == "HappyPathCachedLogin")
             {
-                var res = new TapoResult {error_code = 0, result = new Result {stok = "Stok"}};
+                var res = new TapoResult {error_code = 0, result = new LoginResult {stok = "Stok"}};
                 var json = JsonSerializer.Serialize(res);
                 return await Task.FromResult(JsonSerializer.Deserialize<TResult>(json));
             }
 
             if (_command == "HappyPathNoCachedLogin")
             {
-                var res = new TapoResult {error_code = 0, result = new Result {stok = "Stok"}};
+                var res = new TapoResult {error_code = 0, result = new LoginResult {stok = "Stok"}};
                 var json = JsonSerializer.Serialize(res);
                 return await Task.FromResult(JsonSerializer.Deserialize<TResult>(json));
             }
